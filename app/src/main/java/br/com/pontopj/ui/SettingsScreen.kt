@@ -32,9 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import br.com.pontopj.AppViewModel
 import br.com.pontopj.data.ImportException
+import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.ImportedSheet
 import br.com.pontopj.data.SheetReader
 import br.com.pontopj.data.formatMoneyInput
@@ -94,6 +97,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                 value = rate,
                 onValueChange = { rate = it },
                 label = { Text("Valor da hora (R$)") },
+                visualTransformation = if (Privacy.hidden) PasswordVisualTransformation() else VisualTransformation.None,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = fieldColors(),
@@ -109,6 +113,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                 value = monthGoal,
                 onValueChange = { monthGoal = it },
                 label = { Text("Meta de ganhos do mês (R$)") },
+                visualTransformation = if (Privacy.hidden) PasswordVisualTransformation() else VisualTransformation.None,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = fieldColors(),

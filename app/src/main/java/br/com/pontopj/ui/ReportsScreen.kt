@@ -36,6 +36,7 @@ import br.com.pontopj.data.DaySummary
 import br.com.pontopj.data.MonthStats
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.data.brl
+import br.com.pontopj.data.brlPlain
 import br.com.pontopj.data.compact
 import br.com.pontopj.data.dateOf
 import br.com.pontopj.data.dayLabel
@@ -259,7 +260,7 @@ private fun buildReport(month: YearMonth, stats: MonthStats, days: List<DaySumma
     val dayFormat = DateTimeFormatter.ofPattern("dd/MM")
     return buildString {
         appendLine("Relatório de ganhos – ${monthLabel(month)}")
-        appendLine("Total: ${brl(stats.earnings)}")
+        appendLine("Total: ${brlPlain(stats.earnings)}")
         appendLine("Horas trabalhadas: ${formatHm(stats.millis)}")
         appendLine("Dias trabalhados: ${stats.daysWorked}")
         appendLine()
@@ -268,7 +269,7 @@ private fun buildReport(month: YearMonth, stats: MonthStats, days: List<DaySumma
                 val end = s.endMillis?.let { timeOf(it) } ?: "em andamento"
                 "${timeOf(s.startMillis)}–$end"
             }
-            appendLine("${d.date.format(dayFormat)}: $periods → ${formatHm(d.millis)} • ${brl(d.earnings)}")
+            appendLine("${d.date.format(dayFormat)}: $periods → ${formatHm(d.millis)} • ${brlPlain(d.earnings)}")
         }
     }
 }

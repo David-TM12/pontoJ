@@ -34,6 +34,12 @@ class Store(context: Context) {
             prefs.edit().putString(KEY_MONTH_GOAL, value.toString()).apply()
         }
 
+    var hideValues: Boolean
+        get() = prefs.getBoolean("hide_values", false)
+        set(value) {
+            prefs.edit().putBoolean("hide_values", value).apply()
+        }
+
     var dailyGoalHours: Double
         get() = prefs.getString(KEY_DAY_GOAL, null)?.toDoubleOrNull() ?: 8.0
         set(value) {

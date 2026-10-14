@@ -153,7 +153,7 @@ private class PdfWriter(
             val x = left + slot * i + (slot - barW) / 2
             canvas.drawRoundRect(RectF(x, base - barH, x + barW, base), 3f, 3f, fill(if (v == maxV) GOLD else GOLD_SOFT))
             if (n <= 16 && v > 0.0) {
-                canvas.drawText(compact(v), x + barW / 2, base - barH - 3f, text(7f, MUTED, align = Paint.Align.CENTER))
+                canvas.drawText(compactPlain(v), x + barW / 2, base - barH - 3f, text(7f, MUTED, align = Paint.Align.CENTER))
             }
             if (n <= 16 || i % 2 == 0) {
                 canvas.drawText(labels[i], x + barW / 2, base + 11f, text(7.5f, MUTED, align = Paint.Align.CENTER))
@@ -217,7 +217,7 @@ object PdfExporter {
 
             w.kpiRow(
                 listOf(
-                    "TOTAL GANHO" to brl(totalEarn),
+                    "TOTAL GANHO" to brlPlain(totalEarn),
                     "HORAS TRABALHADAS" to formatHm(totalMs),
                     "DIAS TRABALHADOS" to "$daysWorked",
                 ),
@@ -227,7 +227,7 @@ object PdfExporter {
                 listOf(
                     "REGISTROS" to "${inRange.size}",
                     "MÉDIA POR DIA" to formatHm(if (daysWorked > 0) totalMs / daysWorked else 0L),
-                    "GANHO MÉDIO POR DIA" to brl(if (daysWorked > 0) totalEarn / daysWorked else 0.0),
+                    "GANHO MÉDIO POR DIA" to brlPlain(if (daysWorked > 0) totalEarn / daysWorked else 0.0),
                 ),
                 highlightFirst = false,
             )
@@ -281,7 +281,7 @@ object PdfExporter {
                             monthLabel(ym),
                             formatHm(list.totalMillis(now)),
                             "${list.map { dateOf(it.startMillis) }.toSet().size}",
-                            brl(list.totalEarnings(now)),
+                            brlPlain(list.totalEarnings(now)),
                         ),
                         zebra = i % 2 == 1,
                     )
@@ -314,14 +314,14 @@ object PdfExporter {
                             timeOf(s.startMillis),
                             s.endMillis?.let { timeOf(it) } ?: "em andamento",
                             formatHm(s.durationMillis(now)),
-                            brl(s.rate),
-                            brl(s.earnings(now)),
+                            brlPlain(s.rate),
+                            brlPlain(s.earnings(now)),
                         ),
                         zebra = i % 2 == 1,
                     )
                 }
                 w.ensure(44f)
-                w.totalBand(formatHm(totalMs), brl(totalEarn), 305f)
+                w.totalBand(formatHm(totalMs), brlPlain(totalEarn), 305f)
             }
 
             w.finish()

@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.data.brl
 import br.com.pontopj.data.formatHm
@@ -70,15 +72,60 @@ fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 fun ScreenTitle(title: String, subtitle: String? = null) {
-    Column {
-        Text(
-            title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = Palette.Text,
-        )
-        if (subtitle != null) {
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Palette.Text,
+            )
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        EyeToggle()
+    }
+}
+
+/** Botão do olho: aberto = valores visíveis; fechado = valores em R$ ocultos em todas as telas. */
+@Composable
+fun EyeToggle(modifier: Modifier = Modifier) {
+    val hidden = Privacy.hidden
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(Palette.SurfaceHigh)
+            .border(1.dp, if (hidden) Palette.Gold else Palette.Outline, CircleShape)
+            .clickable(
+                onClickLabel = if (hidden) "Mostrar valores" else "Ocultar valores",
+            ) { Privacy.toggle() },
+        contentAlignment = Alignment.Center,
+    ) {
+        EyeIcon(open = !hidden, color = if (hidden) Palette.Gold else Palette.Muted, modifier = Modifier.size(24.dp))
+    }
+}
+
+/** Olho desenhado na mão (aberto ou fechado com risco). */
+@Composable
+fun EyeIcon(open: Boolean, color: Color, modifier: Modifier = Modifier.size(24.dp)) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val stroke = Stroke(width = w * 0.085f, cap = StrokeCap.Round)
+        val outline = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.06f, h * 0.5f)
+            quadraticBezierTo(w * 0.5f, h * 0.02f, w * 0.94f, h * 0.5f)
+            quadraticBezierTo(w * 0.5f, h * 0.98f, w * 0.06f, h * 0.5f)
+            close()
+        }
+        drawPath(outline, color, style = stroke)
+        if (open) {
+            drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.5f))
+        } else {
+            drawLine(color, Offset(w * 0.18f, h * 0.84f), Offset(w * 0.82f, h * 0.16f), strokeWidth = w * 0.095f, cap = StrokeCap.Round)
         }
     }
 }

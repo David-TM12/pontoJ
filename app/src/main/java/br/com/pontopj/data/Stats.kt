@@ -1,5 +1,8 @@
 package br.com.pontopj.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.text.NumberFormat
 import java.time.DayOfWeek
 import java.time.Instant
@@ -16,10 +19,31 @@ private fun zone(): ZoneId = ZoneId.systemDefault()
 
 // ---------- Formatação ----------
 
-fun brl(value: Double): String = NumberFormat.getCurrencyInstance(PtBR).format(value)
+/** Modo privacidade: quando ligado, valores em dinheiro aparecem ocultos na tela. */
+object Privacy {
+    var hidden by mutableStateOf(false)
+
+    /** Quem guarda a escolha (definido pelo AppViewModel). */
+    var persist: ((Boolean) -> Unit)? = null
+
+    fun toggle() {
+        hidden = !hidden
+        persist?.invoke(hidden)
+    }
+}
+
+const val MASK = "R$ ••••"
+
+/** Valor em reais; fica oculto (R$ ••••) quando o modo privacidade está ligado. */
+fun brl(value: Double): String = if (Privacy.hidden) MASK else brlPlain(value)
+
+/** Valor em reais sempre visível (PDF, exportações e textos compartilhados de propósito). */
+fun brlPlain(value: Double): String = NumberFormat.getCurrencyInstance(PtBR).format(value)
 
 /** 1.2k, 850 ... para rótulos curtos em gráficos. */
-fun compact(value: Double): String = when {
+fun compact(value: Double): String = if (Privacy.hidden) "" else compactPlain(value)
+
+fun compactPlain(value: Double): String = when {
     value <= 0.0 -> ""
     value >= 1000 -> String.format(PtBR, "%.1fk", value / 1000)
     else -> String.format(PtBR, "%.0f", value)

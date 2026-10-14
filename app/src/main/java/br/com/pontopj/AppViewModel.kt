@@ -7,12 +7,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import br.com.pontopj.data.LocationFix
+import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.Store
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.location.reverseGeocode
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val store = Store(app)
+
+    init {
+        Privacy.hidden = store.hideValues
+        Privacy.persist = { store.hideValues = it }
+    }
 
     var sessions by mutableStateOf(store.loadSessions().sortedByDescending { it.startMillis })
         private set
