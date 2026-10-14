@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +59,71 @@ import java.time.YearMonth
 import kotlin.math.roundToInt
 
 private val LineColor = Color(0xFFFFE9A8)
+
+/**
+ * Liga os pontos com curvas suaves (tangentes horizontais em cada ponto), sem "estourar" acima
+ * ou abaixo dos valores. Com [moveToFirst] = false continua o caminho atual a partir do primeiro ponto.
+ */
+private fun Path.curveThrough(points: List<Offset>, moveToFirst: Boolean) {
+    if (points.isEmpty()) return
+    if (moveToFirst) moveTo(points[0].x, points[0].y) else lineTo(points[0].x, points[0].y)
+    for (i in 1 until points.size) {
+        val a = points[i - 1]
+        val b = points[i]
+        val mid = (a.x + b.x) / 2f
+        cubicTo(mid, a.y, mid, b.y, b.x, b.y)
+    }
+}
+
+/** Seletor em lista: mostra a opção atual e abre um menu ao tocar. */
+@Composable
+fun FilterDropdown(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(50)
+    Box(modifier) {
+        Row(
+            modifier = Modifier
+                .clip(shape)
+                .background(Palette.SurfaceHigh)
+                .border(1.dp, Palette.Gold.copy(alpha = 0.6f), shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 16.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                options.getOrElse(selectedIndex) { "" },
+                color = Palette.Gold,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("▾", color = Palette.Gold)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEachIndexed { index, label ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            label,
+                            color = if (index == selectedIndex) Palette.Gold else Palette.Text,
+                            fontWeight = if (index == selectedIndex) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    },
+                    onClick = {
+                        onSelect(index)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
 
 /** Botão de filtro em formato de pílula. */
 @Composable
@@ -168,10 +235,7 @@ fun EarningsChart(
                 fun yOf(v: Double): Float = h * (1f - (v / maxValue).toFloat())
 
                 val path = Path()
-                average.forEachIndexed { i, v ->
-                    val x = cell * (i + 0.5f)
-                    if (i == 0) path.moveTo(x, yOf(v)) else path.lineTo(x, yOf(v))
-                }
+                path.curveThrough(average.mapIndexed { i, v -> Offset(cell * (i + 0.5f), yOf(v)) }, moveToFirst = true)
                 drawPath(
                     path = path,
                     color = LineColor,
@@ -250,15 +314,13 @@ fun CumulativeChart(
                 )
             }
             if (points.isNotEmpty()) {
+                val pts = points.mapIndexed { i, v -> Offset(xOf(i + 1), yOf(v)) }
                 val line = Path()
+                line.curveThrough(pts, moveToFirst = true)
                 val area = Path()
-                area.moveTo(xOf(1), h)
-                points.forEachIndexed { i, v ->
-                    val x = xOf(i + 1)
-                    if (i == 0) line.moveTo(x, yOf(v)) else line.lineTo(x, yOf(v))
-                    area.lineTo(x, yOf(v))
-                }
-                area.lineTo(xOf(points.size), h)
+                area.moveTo(pts.first().x, h)
+                area.curveThrough(pts, moveToFirst = false)
+                area.lineTo(pts.last().x, h)
                 area.close()
                 drawPath(
                     path = area,

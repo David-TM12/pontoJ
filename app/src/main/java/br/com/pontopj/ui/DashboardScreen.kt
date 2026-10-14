@@ -172,18 +172,24 @@ fun DashboardScreen(vm: AppViewModel) {
 
         // ---- Ganhos por dia: filtro, barras clicáveis e linha de tendência ----
         AppCard {
-            SectionTitle("Ganhos por dia")
+            val rangeOptions = listOf(7 to "7 dias", 14 to "14 dias", 21 to "21 dias", 30 to "1 mês")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SectionTitle("Ganhos por dia")
+                FilterDropdown(
+                    options = rangeOptions.map { it.second },
+                    selectedIndex = rangeOptions.indexOfFirst { it.first == rangeDays }.coerceAtLeast(0),
+                    onSelect = { rangeDays = rangeOptions[it].first },
+                )
+            }
             Text(
                 "Toque em uma barra para destacar o dia",
                 color = Palette.Muted,
                 style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(7 to "7 dias", 14 to "14 dias", 21 to "21 dias", 30 to "1 mês").forEach { (value, label) ->
-                    RangeChip(label = label, selected = rangeDays == value, onClick = { rangeDays = value })
-                }
-            }
             Spacer(Modifier.height(14.dp))
             Row(
                 modifier = Modifier
