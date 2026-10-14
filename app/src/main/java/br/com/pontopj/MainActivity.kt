@@ -50,6 +50,7 @@ import br.com.pontopj.ui.Palette
 import br.com.pontopj.ui.PontoTheme
 import br.com.pontopj.ui.ReportsScreen
 import br.com.pontopj.ui.SettingsScreen
+import br.com.pontopj.ui.ThemeState
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
@@ -60,9 +61,14 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
+        // Carrega o tema salvo antes da primeira tela, para não piscar a cor errada.
+        val vm = viewModel
+        ThemeState.systemDark =
+            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+            android.content.res.Configuration.UI_MODE_NIGHT_YES
         setContent {
             PontoTheme {
-                App(viewModel)
+                App(vm)
             }
         }
     }
@@ -129,7 +135,7 @@ private fun App(vm: AppViewModel) {
     Scaffold(
         containerColor = Palette.Black,
         bottomBar = {
-            NavigationBar(containerColor = Color(0xFF0F0F0E)) {
+            NavigationBar(containerColor = Palette.Surface) {
                 NavigationBarItem(
                     selected = tab == 0,
                     onClick = { tab = 0 },

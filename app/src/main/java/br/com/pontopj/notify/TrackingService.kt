@@ -65,6 +65,7 @@ class TrackingService : Service() {
             dayEarnings = today.totalEarnings(now),
             goalHours = store.dailyGoalHours,
             hideValues = store.hideValues,
+            options = store.notifOptions,
             now = now,
         )
         if (first) {

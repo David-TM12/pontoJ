@@ -204,7 +204,7 @@ fun ImportDialog(
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Palette.Gold,
-                            contentColor = Palette.Black,
+                            contentColor = Palette.OnGold,
                         ),
                     ) { Text("Importar", fontWeight = FontWeight.Bold) }
                 }

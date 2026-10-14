@@ -14,6 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -154,7 +163,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.OnGold),
             ) { Text("Salvar", fontWeight = FontWeight.Bold) }
             message?.let {
                 Text(
@@ -181,7 +190,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                     Button(
                         onClick = onRequestPermission,
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+                        colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.OnGold),
                     ) { Text("Permitir", fontWeight = FontWeight.Bold) }
                     Spacer(Modifier.width(8.dp))
                 }
@@ -199,43 +208,80 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
         }
 
         AppCard {
+            SectionTitle("Aparência")
+            Text(
+                "Escolha o tema e a cor de destaque do app.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    RangeChip(
+                        label = mode.label,
+                        selected = ThemeState.mode == mode,
+                        onClick = { vm.changeThemeMode(mode) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Text("Cor de destaque", color = Palette.Text, style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Accents.forEachIndexed { index, option ->
+                    val selected = ThemeState.accentIndex == index
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(option.color)
+                            .border(2.dp, if (selected) Palette.Text else Color.Transparent, CircleShape)
+                            .clickable(onClickLabel = option.name) { vm.changeAccent(index) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (selected) Text("✓", color = Palette.OnGold, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            Text(
+                "Destaque atual: ${Accents[ThemeState.accentIndex.coerceIn(Accents.indices)].name}",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+
+        AppCard {
             SectionTitle("Notificação do ponto")
             Text(
-                "Enquanto o ponto estiver aberto, uma notificação fixa mostra o tempo correndo, o ganho do dia e o " +
-                    "progresso da meta, com o botão Registrar saída.",
+                "Enquanto o ponto estiver aberto, uma notificação fixa acompanha sua jornada. " +
+                    "Com os valores ocultos (olho fechado), o ganho também some da notificação.",
                 color = Palette.Muted,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Mostrar notificação", color = Palette.Text, modifier = Modifier.weight(1f))
-                Switch(
-                    checked = vm.notifyEnabled,
-                    onCheckedChange = { vm.changeNotify(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Palette.Black,
-                        checkedTrackColor = Palette.Gold,
-                    ),
-                )
+            SwitchRow("Mostrar notificação", null, vm.notifyEnabled) { vm.changeNotify(it) }
+
+            Spacer(Modifier.height(10.dp))
+            Text("O que aparece nela", color = Palette.Text, fontWeight = FontWeight.SemiBold)
+            val o = vm.notifOptions
+            val on = vm.notifyEnabled
+            SwitchRow("Hora da entrada", null, o.entry, on) { vm.changeNotifOptions(o.copy(entry = it)) }
+            SwitchRow("Tempo decorrido", "cronômetro correndo", o.time, on) { vm.changeNotifOptions(o.copy(time = it)) }
+            SwitchRow("Ganho em tempo real", "some com o olho fechado", o.earnings, on) {
+                vm.changeNotifOptions(o.copy(earnings = it))
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Avisos", color = Palette.Text)
-                    Text(
-                        "Meta do dia batida e lembrete se esquecer a saída (12 h aberto)",
-                        color = Palette.Muted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Switch(
-                    checked = vm.alertsEnabled,
-                    onCheckedChange = { vm.changeAlerts(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Palette.Black,
-                        checkedTrackColor = Palette.Gold,
-                    ),
-                )
+            SwitchRow("Meta do dia", "porcentagem, tempo que falta e barra", o.goal, on) {
+                vm.changeNotifOptions(o.copy(goal = it))
             }
+            SwitchRow("Botão Registrar saída", null, o.button, on) { vm.changeNotifOptions(o.copy(button = it)) }
+
+            Spacer(Modifier.height(10.dp))
+            SwitchRow(
+                "Avisos",
+                "meta do dia batida e lembrete se esquecer a saída (12 h aberto)",
+                vm.alertsEnabled,
+            ) { vm.changeAlerts(it) }
         }
 
         AppCard {
@@ -254,7 +300,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.OnGold),
             ) { Text("Importar de Excel ou CSV", fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(8.dp))
             Row {
@@ -355,6 +401,38 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
             dismissButton = {
                 TextButton(onClick = { confirmClear = false }) { Text("Cancelar", color = Palette.Muted) }
             },
+        )
+    }
+}
+
+@Composable
+private fun SwitchRow(
+    label: String,
+    sub: String?,
+    checked: Boolean,
+    enabled: Boolean = true,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, color = if (enabled) Palette.Text else Palette.Muted)
+            if (sub != null) {
+                Text(sub, color = Palette.Muted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Palette.OnGold,
+                checkedTrackColor = Palette.Gold,
+            ),
         )
     }
 }

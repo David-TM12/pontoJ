@@ -94,7 +94,7 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
 
     val periodHours = monthSessions.millisByPeriod(now).map { it / 3_600_000.0 }
     val periodLabels = listOf("Madrugada (0–6h)", "Manhã (6–12h)", "Tarde (12–18h)", "Noite (18–24h)")
-    val periodColors = listOf(Color(0xFF5C4A12), Palette.Gold, Color(0xFFF2D27A), Palette.GoldDeep)
+    val periodColors = listOf(Palette.Muted, Palette.Gold, Palette.GoldLight, Palette.GoldDeep.copy(alpha = 0.55f))
 
     val millisByDay = monthDays.associate { it.date to it.millis }
     val earningsByDay = monthDays.associate { it.date to it.earnings }
@@ -213,7 +213,7 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 LegendDot(Palette.Gold, "Ganho do dia")
-                LegendDot(Color(0xFFFFE9A8), "Média móvel (3 dias)", line = true)
+                LegendDot(Palette.GoldLight, "Média móvel (3 dias)", line = true)
             }
             Spacer(Modifier.height(12.dp))
             Text(

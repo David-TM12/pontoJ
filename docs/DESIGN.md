@@ -35,3 +35,7 @@ Cada cor tem uma rampa de tons, do preto ao branco (ver imagem). Os neutros vão
 ## Situação no código
 
 As cores do app (`ui/Theme.kt`, PDF e gráficos) já seguem esta paleta. As fontes Geist e JetBrains Mono ainda não foram incluídas no app (usa a fonte padrão do Android).
+
+## Temas
+
+O app aceita tema claro, escuro ou do sistema e 5 cores de destaque (`ui/Theme.kt`). O dourado `#F5BA1E` continua sendo o padrão. Os nomes `Palette.Gold*` significam "cor de destaque".

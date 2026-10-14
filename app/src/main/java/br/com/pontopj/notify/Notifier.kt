@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import java.util.Locale
 import br.com.pontopj.MainActivity
 import br.com.pontopj.R
+import br.com.pontopj.data.NotifOptions
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.data.brlPlain
 import br.com.pontopj.data.timeOf
@@ -60,6 +61,8 @@ object Notifier {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
+    private fun vis(show: Boolean): Int = if (show) View.VISIBLE else View.GONE
+
     private fun hm(ms: Long): String {
         val minutes = (ms / 60_000L).coerceAtLeast(0L)
         return String.format("%02dh %02dm", minutes / 60, minutes % 60)
@@ -80,6 +83,7 @@ object Notifier {
         dayEarnings: Double,
         goalHours: Double,
         hideValues: Boolean,
+        options: NotifOptions,
         now: Long,
     ): Notification {
         val goalMs = (goalHours * 3_600_000.0).toLong()
@@ -98,9 +102,14 @@ object Notifier {
 
         val big = RemoteViews(context.packageName, R.layout.notification_big).apply {
             setTextViewText(R.id.notif_entry, entry)
+            setViewVisibility(R.id.notif_entry, vis(options.entry))
+            setViewVisibility(R.id.notif_time_col, vis(options.time))
+            setViewVisibility(R.id.notif_earn_col, vis(options.earnings))
+            setViewVisibility(R.id.notif_main_row, vis(options.time || options.earnings))
+            setViewVisibility(R.id.notif_btn, vis(options.button))
             setChronometer(R.id.notif_chrono, chronoBase, null, true)
             setTextViewText(R.id.notif_earnings, earnings)
-            if (goalMs > 0L) {
+            if (goalMs > 0L && options.goal) {
                 setViewVisibility(R.id.notif_goal_block, View.VISIBLE)
                 setViewVisibility(R.id.notif_progress, View.VISIBLE)
                 setTextViewText(R.id.notif_goal, goalLabel)
@@ -114,6 +123,9 @@ object Notifier {
         }
         val small = RemoteViews(context.packageName, R.layout.notification_small).apply {
             setChronometer(R.id.notif_chrono, chronoBase, null, true)
+            setViewVisibility(R.id.notif_chrono, vis(options.time))
+            setViewVisibility(R.id.notif_earn_col, vis(options.earnings))
+            setViewVisibility(R.id.notif_btn, vis(options.button))
             setTextViewText(R.id.notif_earnings, earnings)
             setOnClickPendingIntent(R.id.notif_btn, stopIntent)
         }
@@ -122,7 +134,7 @@ object Notifier {
             .setSmallIcon(R.drawable.ic_stat_clock)
             .setColor(GOLD)
             .setContentTitle("Jornada ativa")
-            .setContentText("$entry  ·  $earnings")
+            .setContentText(listOfNotNull(entry.takeIf { options.entry }, earnings.takeIf { options.earnings }).joinToString("  ·  "))
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomContentView(small)
             .setCustomBigContentView(big)

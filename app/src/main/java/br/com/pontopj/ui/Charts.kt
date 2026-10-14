@@ -58,7 +58,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.roundToInt
 
-private val LineColor = Color(0xFFFFE9A8)
+private val LineColor: Color get() = Palette.GoldLight
 
 /**
  * Liga os pontos com curvas suaves (tangentes horizontais em cada ponto), sem "estourar" acima
@@ -140,7 +140,7 @@ fun RangeChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: M
     ) {
         Text(
             label,
-            color = if (selected) Palette.Black else Palette.Muted,
+            color = if (selected) Palette.OnGold else Palette.Muted,
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.labelLarge,
         )
@@ -503,7 +503,7 @@ fun CalendarHeatmap(
                         ) {
                             Text(
                                 "$dayNumber",
-                                color = if (ms > 0L && intensity > 0.55f) Palette.Black else Palette.Muted,
+                                color = if (ms > 0L && intensity > 0.55f) Palette.OnGold else Palette.Muted,
                                 style = MaterialTheme.typography.labelSmall,
                             )
                         }

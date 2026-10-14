@@ -57,7 +57,7 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
 ## O que o app faz
 
 - **Ponto**: um toque registra entrada e saída, com cronômetro ao vivo e ganho do dia em tempo real.
-- **Notificação do ponto**: com o ponto aberto, uma notificação fixa mostra o cronômetro correndo, o ganho do dia, a hora prevista para bater a meta e uma barra de progresso, com o botão **Registrar saída**. Também avisa quando a meta do dia é batida e lembra da saída se o ponto ficar aberto por 12 h. Volta sozinha depois de reiniciar o celular e respeita o olho de ocultar valores. Dá para desligar em Ajustes.
+- **Notificação do ponto**: com o ponto aberto, uma notificação fixa mostra o cronômetro correndo, o ganho do dia, a hora prevista para bater a meta e uma barra de progresso, com o botão **Registrar saída**. Também avisa quando a meta do dia é batida e lembra da saída se o ponto ficar aberto por 12 h. Volta sozinha depois de reiniciar o celular e respeita o olho de ocultar valores. Em Ajustes dá para ligar/desligar a notificação e escolher o que ela mostra (entrada, tempo, ganho, meta e botão de saída).
 - **Localização em tempo real**: mostra endereço, coordenadas e precisão; grava onde você bateu o ponto.
 - **Valor da hora**: definido em Ajustes. Cada registro guarda o valor da época, então mudar depois não altera o histórico.
 - **Lançamento manual**: data escolhida no calendário e horários em campos de hora (hh:mm) que só aceitam horas válidas e passam sozinhos da entrada para a saída.
@@ -70,6 +70,7 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
 - **Importar de Excel/CSV**: em Ajustes > Importar e exportar. Lê `.xlsx` e `.csv`, reconhece colunas como Data, Entrada, Saída (e Entrada 2 / Saída 2 para quem para no almoço), deixa você conferir as colunas e ver uma prévia antes de importar. Registros que já existem são ignorados. Há um botão para baixar um modelo e outro para exportar seus registros.
 - **Painel do dia**: ao tocar numa barra do gráfico, abre o resumo do dia (ganho, comparativo com a média do período, registros, horas, maior registro e composição por registro). Também há os indicadores "Média diária" e "Consistência".
 - **Extrato diário recente** (Dashboard): últimos dias trabalhados com ganho do dia e variação em relação ao dia anterior; "Ver tudo" abre os Relatórios.
+- **Temas**: claro, escuro ou do sistema, com 5 cores de destaque (dourado, azul, verde, roxo e coral), em Ajustes > Aparência.
 - **Ocultar valores**: o ícone de olho no topo de cada tela esconde todos os valores em R$ (útil em público). A escolha fica salva.
 
 Os dados ficam só no celular.

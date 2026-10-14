@@ -7,19 +7,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import br.com.pontopj.data.LocationFix
+import br.com.pontopj.data.NotifOptions
 import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.Store
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.location.reverseGeocode
 import br.com.pontopj.notify.AppBus
 import br.com.pontopj.notify.TrackingService
+import br.com.pontopj.ui.Accents
+import br.com.pontopj.ui.ThemeMode
+import br.com.pontopj.ui.ThemeState
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val store = Store(app)
 
     init {
         Privacy.hidden = store.hideValues
-        Privacy.persist = { store.hideValues = it }
+        Privacy.persist = {
+            store.hideValues = it
+            TrackingService.sync(app) // a notificação acompanha o olho na hora
+        }
+        ThemeState.mode = ThemeMode.entries.getOrElse(store.themeMode) { ThemeMode.System }
+        ThemeState.accentIndex = store.accentIndex.coerceIn(Accents.indices)
         // O botão "Registrar saída" da notificação mexe nos registros fora do app.
         AppBus.onSessionsChanged = { reload() }
         TrackingService.sync(app)
@@ -39,6 +48,25 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         notifyEnabled = value
         store.notifyEnabled = value
         TrackingService.sync(getApplication())
+    }
+
+    var notifOptions by mutableStateOf(store.notifOptions)
+        private set
+
+    fun changeNotifOptions(options: NotifOptions) {
+        notifOptions = options
+        store.notifOptions = options
+        TrackingService.sync(getApplication()) // atualiza a notificação já aberta
+    }
+
+    fun changeThemeMode(mode: ThemeMode) {
+        ThemeState.mode = mode
+        store.themeMode = mode.ordinal
+    }
+
+    fun changeAccent(index: Int) {
+        ThemeState.accentIndex = index.coerceIn(Accents.indices)
+        store.accentIndex = ThemeState.accentIndex
     }
 
     fun changeAlerts(value: Boolean) {

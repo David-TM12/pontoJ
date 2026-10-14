@@ -152,7 +152,7 @@ fun HomeScreen(
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (active != null) Palette.Danger else Palette.Gold,
-                    contentColor = Palette.Black,
+                    contentColor = Palette.OnGold,
                 ),
             ) {
                 Text(

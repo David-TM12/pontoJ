@@ -61,6 +61,38 @@ class Store(context: Context) {
             prefs.edit().putLong("long_alert_id", value).apply()
         }
 
+    /** O que aparece na notificação do ponto. */
+    var notifOptions: NotifOptions
+        get() = NotifOptions(
+            entry = prefs.getBoolean("n_entry", true),
+            time = prefs.getBoolean("n_time", true),
+            earnings = prefs.getBoolean("n_earnings", true),
+            goal = prefs.getBoolean("n_goal", true),
+            button = prefs.getBoolean("n_button", true),
+        )
+        set(value) {
+            prefs.edit()
+                .putBoolean("n_entry", value.entry)
+                .putBoolean("n_time", value.time)
+                .putBoolean("n_earnings", value.earnings)
+                .putBoolean("n_goal", value.goal)
+                .putBoolean("n_button", value.button)
+                .apply()
+        }
+
+    /** Tema: 0 = sistema, 1 = escuro, 2 = claro. */
+    var themeMode: Int
+        get() = prefs.getInt("theme_mode", 0)
+        set(value) {
+            prefs.edit().putInt("theme_mode", value).apply()
+        }
+
+    var accentIndex: Int
+        get() = prefs.getInt("accent_index", 0)
+        set(value) {
+            prefs.edit().putInt("accent_index", value).apply()
+        }
+
     var hideValues: Boolean
         get() = prefs.getBoolean("hide_values", false)
         set(value) {
@@ -108,3 +140,12 @@ class Store(context: Context) {
         const val KEY_DAY_GOAL = "daily_goal_hours"
     }
 }
+
+/** Quais informações aparecem na notificação do ponto. O cabeçalho "Jornada ativa" sempre aparece. */
+data class NotifOptions(
+    val entry: Boolean = true,
+    val time: Boolean = true,
+    val earnings: Boolean = true,
+    val goal: Boolean = true,
+    val button: Boolean = true,
+)

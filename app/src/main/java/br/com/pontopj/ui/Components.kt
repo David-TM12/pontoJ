@@ -138,7 +138,7 @@ fun AppCard(
 ) {
     val shape = RoundedCornerShape(24.dp)
     val brush = if (highlight) {
-        Brush.linearGradient(listOf(Color(0xFF2B2209), Color(0xFF111114)))
+        Brush.linearGradient(listOf(Palette.GoldSoft, Palette.Surface))
     } else {
         Brush.linearGradient(listOf(Palette.Surface, Palette.Surface))
     }

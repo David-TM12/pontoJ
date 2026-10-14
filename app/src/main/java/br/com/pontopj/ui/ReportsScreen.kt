@@ -147,7 +147,7 @@ fun ReportsScreen(vm: AppViewModel) {
                     .weight(1f)
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.OnGold),
             ) { Text("Gerar PDF", fontWeight = FontWeight.Bold) }
             OutlinedButton(
                 onClick = { showManual = true },
