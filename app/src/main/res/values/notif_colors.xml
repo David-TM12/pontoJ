@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cores da notificação do ponto: acompanham o tema claro/escuro do sistema. -->
+<resources>
+    <color name="notif_text">#1B1B1F</color>
+    <color name="notif_muted">#5F5B4E</color>
+    <color name="notif_status">#8A6200</color>
+    <color name="notif_earnings">#8A6200</color>
+    <color name="notif_pill">#E7E2D2</color>
+    <color name="notif_track">#D8D3C3</color>
+</resources>

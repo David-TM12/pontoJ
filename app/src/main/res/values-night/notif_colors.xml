@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="notif_text">#F4F1E8</color>
+    <color name="notif_muted">#A39F8F</color>
+    <color name="notif_status">#F5BA1E</color>
+    <color name="notif_earnings">#FFD97A</color>
+    <color name="notif_pill">#2F2F36</color>
+    <color name="notif_track">#3F3F47</color>
+</resources>

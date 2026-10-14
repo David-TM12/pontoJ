@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#1C1C21"
     android:orientation="vertical"
     android:padding="14dp">
 
@@ -17,7 +16,7 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:text="● JORNADA ATIVA • GRAVANDO"
-            android:textColor="#F5BA1E"
+            android:textColor="@color/notif_status"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -32,7 +31,7 @@
             android:paddingEnd="10dp"
             android:paddingBottom="4dp"
             android:text="Entrada: --:--"
-            android:textColor="#E9E6DC"
+            android:textColor="@color/notif_text"
             android:textSize="11sp" />
     </RelativeLayout>
 
@@ -51,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="TEMPO DECORRIDO"
-                android:textColor="#8E8A7C"
+                android:textColor="@color/notif_muted"
                 android:textSize="10sp" />
 
             <Chronometer
@@ -59,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
-                android:textColor="#F4F1E8"
+                android:textColor="@color/notif_text"
                 android:textSize="24sp" />
         </LinearLayout>
 
@@ -74,7 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="GANHO EM TEMPO REAL"
-                android:textColor="#8E8A7C"
+                android:textColor="@color/notif_muted"
                 android:textSize="10sp" />
 
             <TextView
@@ -83,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:text="R$ 0,00"
-                android:textColor="#FFD97A"
+                android:textColor="@color/notif_earnings"
                 android:textSize="24sp" />
         </LinearLayout>
     </RelativeLayout>
@@ -100,7 +99,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:text="Meta: 8h00"
-            android:textColor="#C9C5B6"
+            android:textColor="@color/notif_muted"
             android:textSize="11sp" />
 
         <TextView
@@ -108,7 +107,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:textColor="#FFD97A"
+            android:textColor="@color/notif_earnings"
             android:textSize="11sp" />
     </RelativeLayout>
 
