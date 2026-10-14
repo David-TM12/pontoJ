@@ -14,15 +14,28 @@ android {
         applicationId = "br.com.pontopj"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    // Chave fixa (pontopj.keystore): toda versão gerada tem a mesma assinatura, então o APK novo
+    // atualiza o app instalado sem apagar os registros. É uma chave de uso pessoal, não da Play Store.
+    signingConfigs {
+        create("pontopj") {
+            storeFile = file("pontopj.keystore")
+            storePassword = "pontopj123"
+            keyAlias = "pontopj"
+            keyPassword = "pontopj123"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("pontopj")
+        }
         release {
             isMinifyEnabled = false
-            // Assinado com a chave de debug para poder ser instalado direto no celular.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("pontopj")
         }
     }
 

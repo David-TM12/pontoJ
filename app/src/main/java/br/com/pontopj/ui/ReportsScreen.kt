@@ -16,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -69,6 +70,7 @@ fun ReportsScreen(vm: AppViewModel) {
     val chartValues = chartMonths.map { ym -> vm.sessions.monthStats(ym, now, today).earnings }
 
     var showManual by remember { mutableStateOf(false) }
+    var showPdf by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<WorkSession?>(null) }
 
     ScreenColumn {
@@ -139,25 +141,33 @@ fun ReportsScreen(vm: AppViewModel) {
         // ---- Ações ----
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             Button(
-                onClick = {
-                    val text = buildReport(month, stats, days, now)
-                    val send = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, "Ganhos – ${monthLabel(month)}")
-                        putExtra(Intent.EXTRA_TEXT, text)
-                    }
-                    context.startActivity(Intent.createChooser(send, "Compartilhar relatório"))
-                },
-                modifier = Modifier.weight(1f),
+                onClick = { showPdf = true },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
-            ) { Text("Compartilhar", fontWeight = FontWeight.Bold) }
+            ) { Text("Gerar PDF", fontWeight = FontWeight.Bold) }
             OutlinedButton(
                 onClick = { showManual = true },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
             ) { Text("+ Lançamento", color = Palette.Gold) }
         }
+        TextButton(
+            onClick = {
+                val text = buildReport(month, stats, days, now)
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "Ganhos – ${monthLabel(month)}")
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+                context.startActivity(Intent.createChooser(send, "Compartilhar relatório"))
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Compartilhar resumo do mês em texto", color = Palette.Muted) }
 
         // ---- Detalhe por dia ----
         SectionTitle("Dia a dia")
@@ -195,6 +205,14 @@ fun ReportsScreen(vm: AppViewModel) {
         }
     }
 
+    if (showPdf) {
+        PdfDialog(
+            sessions = vm.sessions,
+            shownMonth = month,
+            now = now,
+            onDismiss = { showPdf = false },
+        )
+    }
     if (showManual) {
         SessionDialog(
             initial = null,

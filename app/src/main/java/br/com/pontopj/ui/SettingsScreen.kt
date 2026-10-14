@@ -3,6 +3,8 @@ package br.com.pontopj.ui
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +34,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import br.com.pontopj.AppViewModel
+import br.com.pontopj.data.ImportException
+import br.com.pontopj.data.ImportedSheet
+import br.com.pontopj.data.SheetReader
 import br.com.pontopj.data.formatMoneyInput
 import br.com.pontopj.data.parseMoney
+import br.com.pontopj.data.saveToDownloads
+import br.com.pontopj.data.sessionsToCsv
+import br.com.pontopj.data.templateCsv
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission: () -> Unit) {
@@ -49,6 +61,28 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
     var message by remember { mutableStateOf<String?>(null) }
     var messageIsError by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+    var importSheet by remember { mutableStateOf<ImportedSheet?>(null) }
+    val scope = rememberCoroutineScope()
+
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val opened = withContext(Dispatchers.IO) { runCatching { SheetReader.open(context, uri) } }
+                val sheet = opened.getOrNull()
+                if (sheet != null) {
+                    importSheet = sheet
+                } else {
+                    val error = opened.exceptionOrNull()
+                    dataMessage = if (error is ImportException) {
+                        error.message
+                    } else {
+                        "Não foi possível ler o arquivo. Use .xlsx ou .csv."
+                    }
+                }
+            }
+        }
+    }
 
     ScreenColumn {
         ScreenTitle("Ajustes", "Valor da hora, metas e permissões")
@@ -157,10 +191,75 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
         }
 
         AppCard {
+            SectionTitle("Importar e exportar")
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Traga suas horas de uma planilha do Excel (.xlsx) ou de um arquivo CSV. " +
+                    "O app reconhece colunas como Data, Entrada e Saída e deixa você conferir antes de importar.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { picker.launch(arrayOf("*/*")) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+            ) { Text("Importar de Excel ou CSV", fontWeight = FontWeight.Bold) }
+            Spacer(Modifier.height(8.dp))
+            Row {
+                OutlinedButton(
+                    onClick = {
+                        val file = saveToDownloads(
+                            context,
+                            "modelo_horas_ponto_pj.csv",
+                            "text/csv",
+                            templateCsv().toByteArray(Charsets.UTF_8),
+                        )
+                        dataMessage = if (file != null) {
+                            "Modelo salvo em Downloads: ${file.name}"
+                        } else {
+                            "Não foi possível salvar o modelo."
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                ) { Text("Baixar modelo", color = Palette.Gold) }
+                Spacer(Modifier.width(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        val file = saveToDownloads(
+                            context,
+                            "registros_ponto_pj.csv",
+                            "text/csv",
+                            sessionsToCsv(vm.sessions).toByteArray(Charsets.UTF_8),
+                        )
+                        dataMessage = if (file != null) {
+                            "Registros exportados em Downloads: ${file.name}"
+                        } else {
+                            "Não foi possível exportar."
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                ) { Text("Exportar registros", color = Palette.Gold) }
+            }
+            dataMessage?.let {
+                Text(
+                    it,
+                    color = Palette.Gold,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+            }
+        }
+
+        AppCard {
             SectionTitle("Dados")
             Spacer(Modifier.height(6.dp))
             Text(
-                "Tudo fica salvo só neste celular. Desinstalar o app apaga os registros.",
+                "Tudo fica salvo só neste celular. Desinstalar o app apaga os registros; " +
+                    "use “Exportar registros” para guardar uma cópia.",
                 color = Palette.Muted,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -172,10 +271,22 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
         }
 
         Text(
-            "Ponto PJ  ·  versão 1.0",
+            "Ponto PJ  ·  versão 1.1",
             color = Palette.Muted,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    importSheet?.let { sheet ->
+        ImportDialog(
+            vm = vm,
+            sheet = sheet,
+            onDismiss = { importSheet = null },
+            onDone = { text ->
+                dataMessage = text
+                importSheet = null
+            },
         )
     }
 

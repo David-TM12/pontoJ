@@ -111,6 +111,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         persist(emptyList())
     }
 
+    /** Importa registros ignorando os que já existem (mesma entrada e saída). Devolve (novos, repetidos). */
+    fun importSessions(list: List<WorkSession>): Pair<Int, Int> {
+        val existing = sessions.map { it.startMillis to it.endMillis }.toSet()
+        val fresh = list.filter { (it.startMillis to it.endMillis) !in existing }
+        if (fresh.isNotEmpty()) persist(sessions + fresh)
+        return fresh.size to (list.size - fresh.size)
+    }
+
     // ---------- Ajustes ----------
 
     fun updateSettings(rate: Double, monthGoal: Double, dayGoalHours: Double) {
