@@ -1,0 +1,77 @@
+package br.com.pontopj.data
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Armazenamento local simples (SharedPreferences + JSON). Os dados ficam só no aparelho. */
+class Store(context: Context) {
+    private val prefs = context.getSharedPreferences("ponto_pj", Context.MODE_PRIVATE)
+
+    fun loadSessions(): List<WorkSession> {
+        val raw = prefs.getString(KEY_SESSIONS, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { i -> arr.getJSONObject(i).toSession() }
+        }.getOrDefault(emptyList())
+    }
+
+    fun saveSessions(list: List<WorkSession>) {
+        val arr = JSONArray()
+        list.forEach { arr.put(it.toJson()) }
+        prefs.edit().putString(KEY_SESSIONS, arr.toString()).apply()
+    }
+
+    var hourlyRate: Double
+        get() = prefs.getString(KEY_RATE, null)?.toDoubleOrNull() ?: 0.0
+        set(value) {
+            prefs.edit().putString(KEY_RATE, value.toString()).apply()
+        }
+
+    var monthlyGoal: Double
+        get() = prefs.getString(KEY_MONTH_GOAL, null)?.toDoubleOrNull() ?: 0.0
+        set(value) {
+            prefs.edit().putString(KEY_MONTH_GOAL, value.toString()).apply()
+        }
+
+    var dailyGoalHours: Double
+        get() = prefs.getString(KEY_DAY_GOAL, null)?.toDoubleOrNull() ?: 8.0
+        set(value) {
+            prefs.edit().putString(KEY_DAY_GOAL, value.toString()).apply()
+        }
+
+    private fun WorkSession.toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("start", startMillis)
+        endMillis?.let { put("end", it) }
+        put("rate", rate)
+        inLat?.let { put("inLat", it) }
+        inLng?.let { put("inLng", it) }
+        inAddress?.let { put("inAddress", it) }
+        outLat?.let { put("outLat", it) }
+        outLng?.let { put("outLng", it) }
+        outAddress?.let { put("outAddress", it) }
+        put("manual", manual)
+    }
+
+    private fun JSONObject.toSession(): WorkSession = WorkSession(
+        id = getLong("id"),
+        startMillis = getLong("start"),
+        endMillis = if (has("end")) getLong("end") else null,
+        rate = optDouble("rate", 0.0),
+        inLat = if (has("inLat")) getDouble("inLat") else null,
+        inLng = if (has("inLng")) getDouble("inLng") else null,
+        inAddress = if (has("inAddress")) getString("inAddress") else null,
+        outLat = if (has("outLat")) getDouble("outLat") else null,
+        outLng = if (has("outLng")) getDouble("outLng") else null,
+        outAddress = if (has("outAddress")) getString("outAddress") else null,
+        manual = optBoolean("manual", false),
+    )
+
+    private companion object {
+        const val KEY_SESSIONS = "sessions"
+        const val KEY_RATE = "hourly_rate"
+        const val KEY_MONTH_GOAL = "monthly_goal"
+        const val KEY_DAY_GOAL = "daily_goal_hours"
+    }
+}

@@ -1,0 +1,201 @@
+package br.com.pontopj.ui
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import br.com.pontopj.AppViewModel
+import br.com.pontopj.data.formatMoneyInput
+import br.com.pontopj.data.parseMoney
+
+@Composable
+fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission: () -> Unit) {
+    val context = LocalContext.current
+
+    var rate by remember { mutableStateOf(formatMoneyInput(vm.hourlyRate)) }
+    var monthGoal by remember { mutableStateOf(formatMoneyInput(vm.monthlyGoal)) }
+    var dayGoal by remember {
+        mutableStateOf(
+            if (vm.dailyGoalHours % 1.0 == 0.0) vm.dailyGoalHours.toInt().toString()
+            else vm.dailyGoalHours.toString().replace('.', ','),
+        )
+    }
+    var message by remember { mutableStateOf<String?>(null) }
+    var messageIsError by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }
+
+    ScreenColumn {
+        ScreenTitle("Ajustes", "Valor da hora, metas e permissões")
+
+        AppCard {
+            SectionTitle("Seus valores")
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = rate,
+                onValueChange = { rate = it },
+                label = { Text("Valor da hora (R$)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = fieldColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "Vale para os próximos registros. O histórico mantém o valor da época.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 6.dp, bottom = 12.dp),
+            )
+            OutlinedTextField(
+                value = monthGoal,
+                onValueChange = { monthGoal = it },
+                label = { Text("Meta de ganhos do mês (R$)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = fieldColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = dayGoal,
+                onValueChange = { dayGoal = it },
+                label = { Text("Meta diária (horas)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = fieldColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    val r = parseMoney(rate) ?: 0.0
+                    val g = parseMoney(monthGoal) ?: 0.0
+                    val d = parseMoney(dayGoal)
+                    if (rate.isNotBlank() && parseMoney(rate) == null) {
+                        message = "Valor da hora inválido"
+                        messageIsError = true
+                    } else if (d == null || d <= 0.0 || d > 24.0) {
+                        message = "A meta diária deve ficar entre 0 e 24 horas"
+                        messageIsError = true
+                    } else {
+                        vm.updateSettings(r, g, d)
+                        message = "Alterações salvas ✓"
+                        messageIsError = false
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+            ) { Text("Salvar", fontWeight = FontWeight.Bold) }
+            message?.let {
+                Text(
+                    it,
+                    color = if (messageIsError) Palette.Danger else Palette.Gold,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
+
+        AppCard {
+            SectionTitle("Localização")
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (hasPermission) "Permissão concedida. O app mostra sua posição em tempo real enquanto está aberto."
+                else "Sem permissão. Sem ela o ponto é registrado, mas sem o local.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row {
+                if (!hasPermission) {
+                    Button(
+                        onClick = onRequestPermission,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Palette.Gold, contentColor = Palette.Black),
+                    ) { Text("Permitir", fontWeight = FontWeight.Bold) }
+                    Spacer(Modifier.width(8.dp))
+                }
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null),
+                        )
+                        context.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                ) { Text("Configurações do app", color = Palette.Gold) }
+            }
+        }
+
+        AppCard {
+            SectionTitle("Dados")
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Tudo fica salvo só neste celular. Desinstalar o app apaga os registros.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { confirmClear = true },
+                shape = RoundedCornerShape(14.dp),
+            ) { Text("Apagar todos os registros", color = Palette.Danger) }
+        }
+
+        Text(
+            "Ponto PJ  ·  versão 1.0",
+            color = Palette.Muted,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            containerColor = Palette.Surface,
+            titleContentColor = Palette.Text,
+            textContentColor = Palette.Muted,
+            title = { Text("Apagar tudo?") },
+            text = { Text("Todos os registros de entrada e saída serão removidos. Essa ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.clearAll()
+                    confirmClear = false
+                }) { Text("Apagar", color = Palette.Danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClear = false }) { Text("Cancelar", color = Palette.Muted) }
+            },
+        )
+    }
+}
