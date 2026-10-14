@@ -52,7 +52,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun DashboardScreen(vm: AppViewModel) {
+fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
     val now by produceState(System.currentTimeMillis()) {
         while (true) {
             value = System.currentTimeMillis()
@@ -170,6 +170,9 @@ fun DashboardScreen(vm: AppViewModel) {
             }
         }
 
+        // ---- Extrato diário recente ----
+        DailyStatementCard(days = vm.sessions.daySummaries(now), onSeeAll = onSeeAll)
+
         // ---- Ganhos por dia: filtro, barras clicáveis e linha de tendência ----
         AppCard {
             val rangeOptions = listOf(7 to "7 dias", 14 to "14 dias", 21 to "21 dias", 30 to "1 mês")
@@ -191,33 +194,15 @@ fun DashboardScreen(vm: AppViewModel) {
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(14.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Palette.SurfaceHigh, RoundedCornerShape(14.dp))
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        dayLabel(days[selectedIndex]),
-                        color = Palette.Text,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        formatHm(dayMillis[selectedIndex]) + " trabalhadas",
-                        color = Palette.Muted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Text(
-                    brl(dayValues[selectedIndex]),
-                    color = Palette.Gold,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = TABULAR_NUMBERS),
-                )
-            }
+            val workedValues = dayValues.filter { it > 0.0 }
+            DayPanel(
+                date = days[selectedIndex],
+                earnings = dayValues[selectedIndex],
+                millis = dayMillis[selectedIndex],
+                sessions = vm.sessions.onDate(days[selectedIndex]),
+                average = if (workedValues.isEmpty()) 0.0 else workedValues.average(),
+                now = now,
+            )
             Spacer(Modifier.height(14.dp))
             EarningsChart(
                 values = dayValues,
@@ -345,6 +330,24 @@ fun DashboardScreen(vm: AppViewModel) {
                 brl(extra.allTimeEarnings),
                 Modifier.weight(1f),
                 sub = "desde o primeiro registro",
+            )
+        }
+
+        TileRow {
+            val workedValues = dayValues.filter { it > 0.0 }
+            val elapsedBusiness = businessDays(month, today)
+            StatTile(
+                "Média diária",
+                if (workedValues.isEmpty()) "—" else brl(workedValues.average()),
+                Modifier.weight(1f),
+                sub = "base ${dayValues.size} dias",
+                valueColor = Palette.Gold,
+            )
+            StatTile(
+                "Consistência",
+                if (elapsedBusiness > 0) "${(minOf(stats.daysWorked, elapsedBusiness) * 100.0 / elapsedBusiness).roundToInt()}%" else "—",
+                Modifier.weight(1f),
+                sub = "dos dias úteis com registro",
             )
         }
 

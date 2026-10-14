@@ -165,7 +165,7 @@ private fun App(vm: AppViewModel) {
                         onRequestPermission = { requestPermission() },
                         onOpenSettings = { tab = 3 },
                     )
-                    1 -> DashboardScreen(vm)
+                    1 -> DashboardScreen(vm, onSeeAll = { tab = 2 })
                     2 -> ReportsScreen(vm)
                     else -> SettingsScreen(vm, hasPermission) { requestPermission() }
                 }

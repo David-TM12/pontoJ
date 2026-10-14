@@ -67,6 +67,8 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
   - indicadores: sequência de dias, horas extras, maior jornada, dias acima da meta, ritmo para bater a meta, entre outros.
 - **Relatórios**: ganhos mês a mês, comparativo de 6 meses, detalhe dia a dia e **PDF** com o período que você escolher (mês, 30 dias, 3 meses, ano ou datas livres). O PDF é salvo em Downloads.
 - **Importar de Excel/CSV**: em Ajustes > Importar e exportar. Lê `.xlsx` e `.csv`, reconhece colunas como Data, Entrada, Saída (e Entrada 2 / Saída 2 para quem para no almoço), deixa você conferir as colunas e ver uma prévia antes de importar. Registros que já existem são ignorados. Há um botão para baixar um modelo e outro para exportar seus registros.
+- **Painel do dia**: ao tocar numa barra do gráfico, abre o resumo do dia (ganho, comparativo com a média do período, registros, horas, maior registro e composição por registro). Também há os indicadores "Média diária" e "Consistência".
+- **Extrato diário recente** (Dashboard): últimos dias trabalhados com ganho do dia e variação em relação ao dia anterior; "Ver tudo" abre os Relatórios.
 - **Ocultar valores**: o ícone de olho no topo de cada tela esconde todos os valores em R$ (útil em público). A escolha fica salva.
 
 Os dados ficam só no celular.
@@ -153,4 +155,4 @@ docs/screenshots/            # imagens usadas neste README
 
 ## Próximas ideias
 
-Veja o [ROADMAP](ROADMAP.md) (login com conta Google e sincronização na nuvem).
+Veja o [ROADMAP](ROADMAP.md) (login com conta Google e sincronização na nuvem). A referência de visual está em [docs/DESIGN.md](docs/DESIGN.md).

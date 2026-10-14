@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-private val BLACK = 0xFF0A0A0A.toInt()
-private val GOLD = 0xFFE0A800.toInt()
+private val BLACK = 0xFF0D0D11.toInt()
+private val GOLD = 0xFFF5BA1E.toInt()
 private val GOLD_SOFT = 0xFFEBCB6B.toInt()
 private val INK = 0xFF1B1A16.toInt()
 private val MUTED = 0xFF6F6A5C.toInt()

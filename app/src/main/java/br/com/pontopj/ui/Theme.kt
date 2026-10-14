@@ -5,14 +5,15 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/** Paleta: preto profundo + amarelo escuro (ouro envelhecido). */
+/** Paleta Obsidian Gold Analytics (veja docs/DESIGN.md). */
 object Palette {
-    val Black = Color(0xFF0A0A0A)
-    val Surface = Color(0xFF141413)
-    val SurfaceHigh = Color(0xFF1E1D19)
-    val Outline = Color(0xFF2E2B22)
-    val Gold = Color(0xFFE0A800)
-    val GoldDeep = Color(0xFFB8860B)
+    val Black = Color(0xFF0D0D11)
+    val Surface = Color(0xFF17171C)
+    val SurfaceHigh = Color(0xFF1F1F25)
+    val Outline = Color(0xFF2C2C34)
+    val Gold = Color(0xFFF5BA1E)
+    val GoldDeep = Color(0xFFE5A910)
+    val GoldLight = Color(0xFFFFC837)
     val GoldSoft = Color(0xFF3A2F0A)
     val Text = Color(0xFFF4F1E8)
     val Muted = Color(0xFF9C9684)
