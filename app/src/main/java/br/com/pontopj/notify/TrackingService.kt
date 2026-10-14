@@ -100,7 +100,7 @@ class TrackingService : Service() {
     }
 
     companion object {
-        private const val REFRESH_MS = 30_000L
+        private const val REFRESH_MS = 15_000L
         private const val LONG_SESSION_MS = 12 * 3_600_000L
 
         /** Liga ou desliga o serviço conforme haja ponto aberto e a notificação esteja ativada. */

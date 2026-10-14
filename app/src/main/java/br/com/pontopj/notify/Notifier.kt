@@ -7,13 +7,16 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
+import android.view.View
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import java.util.Locale
 import br.com.pontopj.MainActivity
 import br.com.pontopj.R
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.data.brlPlain
-import br.com.pontopj.data.formatHm
 import br.com.pontopj.data.timeOf
 
 /** Cria e monta as notificações do ponto. */
@@ -57,9 +60,15 @@ object Notifier {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
+    private fun hm(ms: Long): String {
+        val minutes = (ms / 60_000L).coerceAtLeast(0L)
+        return String.format("%02dh %02dm", minutes / 60, minutes % 60)
+    }
+
     /**
-     * Notificação fixa do ponto aberto. O cronômetro é desenhado pelo próprio Android (anda sozinho);
-     * o ganho e a barra da meta diária são atualizados pelo serviço a cada 30 segundos.
+     * Notificação fixa do ponto aberto, em cartão escuro com cronômetro, ganho em tempo real e barra
+     * da meta. O cronômetro anda sozinho (é desenhado pelo Android); o ganho e a barra são
+     * atualizados pelo serviço a cada 15 segundos.
      *
      * @param dayMillis horas já feitas hoje, somando todos os registros do dia (inclusive o aberto).
      * @param dayEarnings ganho de hoje.
@@ -74,32 +83,50 @@ object Notifier {
         now: Long,
     ): Notification {
         val goalMs = (goalHours * 3_600_000.0).toLong()
-        val entry = "Entrada às ${timeOf(session.startMillis)}"
-        val earningsPart = if (hideValues) "" else "  ·  ${brlPlain(dayEarnings)} hoje"
-        val short = entry + earningsPart
+        val entry = "Entrada: ${timeOf(session.startMillis)}"
+        val earnings = if (hideValues) "R$ ••••" else brlPlain(dayEarnings)
+        val chronoBase = SystemClock.elapsedRealtime() - dayMillis
+        val stopIntent = clockOutIntent(context)
 
-        val big = buildString {
-            append(short)
+        val percent = if (goalMs > 0L) (dayMillis * 1000L / goalMs).coerceIn(0L, 1000L) / 10.0 else 0.0
+        val goalStatus = when {
+            goalMs <= 0L -> ""
+            dayMillis >= goalMs -> "Meta batida 🎯"
+            else -> String.format(Locale.forLanguageTag("pt-BR"), "%.1f%% concluído • Faltam %s", percent, hm(goalMs - dayMillis))
+        }
+        val goalLabel = "Meta: ${(goalMs / 3_600_000L)}h${String.format("%02d", (goalMs / 60_000L) % 60)}"
+
+        val big = RemoteViews(context.packageName, R.layout.notification_big).apply {
+            setTextViewText(R.id.notif_entry, entry)
+            setChronometer(R.id.notif_chrono, chronoBase, null, true)
+            setTextViewText(R.id.notif_earnings, earnings)
             if (goalMs > 0L) {
-                append('\n')
-                if (dayMillis >= goalMs) {
-                    append("Meta do dia batida 🎯  (${formatHm(dayMillis)} de ${formatHm(goalMs)})")
-                } else {
-                    val remaining = goalMs - dayMillis
-                    append("Meta de ${formatHm(goalMs)} às ${timeOf(now + remaining)}  ·  faltam ${formatHm(remaining)}")
-                }
+                setViewVisibility(R.id.notif_goal_block, View.VISIBLE)
+                setViewVisibility(R.id.notif_progress, View.VISIBLE)
+                setTextViewText(R.id.notif_goal, goalLabel)
+                setTextViewText(R.id.notif_goal_status, goalStatus)
+                setProgressBar(R.id.notif_progress, 100, percent.toInt().coerceIn(0, 100), false)
+            } else {
+                setViewVisibility(R.id.notif_goal_block, View.GONE)
+                setViewVisibility(R.id.notif_progress, View.GONE)
             }
+            setOnClickPendingIntent(R.id.notif_btn, stopIntent)
+        }
+        val small = RemoteViews(context.packageName, R.layout.notification_small).apply {
+            setChronometer(R.id.notif_chrono, chronoBase, null, true)
+            setTextViewText(R.id.notif_earnings, earnings)
+            setOnClickPendingIntent(R.id.notif_btn, stopIntent)
         }
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_ONGOING)
+        return NotificationCompat.Builder(context, CHANNEL_ONGOING)
             .setSmallIcon(R.drawable.ic_stat_clock)
             .setColor(GOLD)
-            .setContentTitle("Ponto aberto")
-            .setContentText(short)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(big))
-            .setWhen(session.startMillis)
-            .setShowWhen(true)
-            .setUsesChronometer(true)
+            .setContentTitle("Jornada ativa")
+            .setContentText("$entry  ·  $earnings")
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(small)
+            .setCustomBigContentView(big)
+            .setShowWhen(false)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -107,22 +134,17 @@ object Notifier {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(openAppIntent(context))
-            .addAction(0, "Registrar saída", clockOutIntent(context))
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(
                 NotificationCompat.Builder(context, CHANNEL_ONGOING)
                     .setSmallIcon(R.drawable.ic_stat_clock)
                     .setColor(GOLD)
-                    .setContentTitle("Ponto aberto")
+                    .setContentTitle("Jornada ativa")
                     .setWhen(session.startMillis)
                     .setUsesChronometer(true)
                     .build(),
             )
-        if (goalMs > 0L) {
-            val percent = (dayMillis * 100L / goalMs).toInt().coerceIn(0, 100)
-            builder.setProgress(100, percent, false)
-        }
-        return builder.build()
+            .build()
     }
 
     @SuppressLint("MissingPermission")
