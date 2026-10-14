@@ -35,13 +35,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var alertsEnabled by mutableStateOf(store.alertsEnabled)
         private set
 
-    fun setNotifyEnabled(value: Boolean) {
+    fun changeNotify(value: Boolean) {
         notifyEnabled = value
         store.notifyEnabled = value
         TrackingService.sync(getApplication())
     }
 
-    fun setAlertsEnabled(value: Boolean) {
+    fun changeAlerts(value: Boolean) {
         alertsEnabled = value
         store.alertsEnabled = value
     }

@@ -211,7 +211,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                 Text("Mostrar notificação", color = Palette.Text, modifier = Modifier.weight(1f))
                 Switch(
                     checked = vm.notifyEnabled,
-                    onCheckedChange = { vm.setNotifyEnabled(it) },
+                    onCheckedChange = { vm.changeNotify(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Palette.Black,
                         checkedTrackColor = Palette.Gold,
@@ -229,7 +229,7 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                 }
                 Switch(
                     checked = vm.alertsEnabled,
-                    onCheckedChange = { vm.setAlertsEnabled(it) },
+                    onCheckedChange = { vm.changeAlerts(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Palette.Black,
                         checkedTrackColor = Palette.Gold,
