@@ -57,6 +57,7 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
 ## O que o app faz
 
 - **Ponto**: um toque registra entrada e saída, com cronômetro ao vivo e ganho do dia em tempo real.
+- **Notificação do ponto**: com o ponto aberto, uma notificação fixa mostra o cronômetro correndo, o ganho do dia, a hora prevista para bater a meta e uma barra de progresso, com o botão **Registrar saída**. Também avisa quando a meta do dia é batida e lembra da saída se o ponto ficar aberto por 12 h. Volta sozinha depois de reiniciar o celular e respeita o olho de ocultar valores. Dá para desligar em Ajustes.
 - **Localização em tempo real**: mostra endereço, coordenadas e precisão; grava onde você bateu o ponto.
 - **Valor da hora**: definido em Ajustes. Cada registro guarda o valor da época, então mudar depois não altera o histórico.
 - **Lançamento manual**: data escolhida no calendário e horários em campos de hora (hh:mm) que só aceitam horas válidas e passam sozinhos da entrada para a saída.

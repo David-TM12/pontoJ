@@ -11,6 +11,8 @@ import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.Store
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.location.reverseGeocode
+import br.com.pontopj.notify.AppBus
+import br.com.pontopj.notify.TrackingService
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val store = Store(app)
@@ -18,6 +20,34 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     init {
         Privacy.hidden = store.hideValues
         Privacy.persist = { store.hideValues = it }
+        // O botão "Registrar saída" da notificação mexe nos registros fora do app.
+        AppBus.onSessionsChanged = { reload() }
+        TrackingService.sync(app)
+    }
+
+    /** Recarrega os registros do armazenamento (mudaram fora do app, por exemplo pela notificação). */
+    fun reload() {
+        sessions = store.loadSessions().sortedByDescending { it.startMillis }
+    }
+
+    var notifyEnabled by mutableStateOf(store.notifyEnabled)
+        private set
+    var alertsEnabled by mutableStateOf(store.alertsEnabled)
+        private set
+
+    fun setNotifyEnabled(value: Boolean) {
+        notifyEnabled = value
+        store.notifyEnabled = value
+        TrackingService.sync(getApplication())
+    }
+
+    fun setAlertsEnabled(value: Boolean) {
+        alertsEnabled = value
+        store.alertsEnabled = value
+    }
+
+    override fun onCleared() {
+        AppBus.onSessionsChanged = null
     }
 
     var sessions by mutableStateOf(store.loadSessions().sortedByDescending { it.startMillis })
@@ -139,5 +169,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private fun persist(list: List<WorkSession>) {
         sessions = list.sortedByDescending { it.startMillis }
         store.saveSessions(sessions)
+        TrackingService.sync(getApplication())
     }
 }

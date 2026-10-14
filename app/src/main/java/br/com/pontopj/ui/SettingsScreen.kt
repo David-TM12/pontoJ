@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -192,6 +195,46 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                     },
                     shape = RoundedCornerShape(14.dp),
                 ) { Text("Configurações do app", color = Palette.Gold) }
+            }
+        }
+
+        AppCard {
+            SectionTitle("Notificação do ponto")
+            Text(
+                "Enquanto o ponto estiver aberto, uma notificação fixa mostra o tempo correndo, o ganho do dia e o " +
+                    "progresso da meta, com o botão Registrar saída.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Mostrar notificação", color = Palette.Text, modifier = Modifier.weight(1f))
+                Switch(
+                    checked = vm.notifyEnabled,
+                    onCheckedChange = { vm.setNotifyEnabled(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Palette.Black,
+                        checkedTrackColor = Palette.Gold,
+                    ),
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Avisos", color = Palette.Text)
+                    Text(
+                        "Meta do dia batida e lembrete se esquecer a saída (12 h aberto)",
+                        color = Palette.Muted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Switch(
+                    checked = vm.alertsEnabled,
+                    onCheckedChange = { vm.setAlertsEnabled(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Palette.Black,
+                        checkedTrackColor = Palette.Gold,
+                    ),
+                )
             }
         }
 

@@ -3,6 +3,7 @@ package br.com.pontopj
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -80,14 +81,17 @@ private fun App(vm: AppViewModel) {
         hasPermission = context.hasLocationPermission()
     }
     val requestPermission = {
-        launcher.launch(
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-        )
+        val wanted = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        // Android 13+: a notificação do ponto precisa desta permissão.
+        if (Build.VERSION.SDK_INT >= 33) wanted += Manifest.permission.POST_NOTIFICATIONS
+        launcher.launch(wanted.toTypedArray())
     }
 
     // Pede a permissão na primeira abertura.
     LaunchedEffect(Unit) {
-        if (!hasPermission) requestPermission()
+        val needsNotification = Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (!hasPermission || needsNotification) requestPermission()
     }
 
     // Localização em tempo real só enquanto o app está visível (economiza bateria).
@@ -100,6 +104,7 @@ private fun App(vm: AppViewModel) {
             }
             if (event == Lifecycle.Event.ON_RESUME) {
                 hasPermission = context.hasLocationPermission()
+                vm.reload() // pode ter mudado pela notificação (Registrar saída)
             }
             if (event == Lifecycle.Event.ON_STOP) {
                 tracker.stop()

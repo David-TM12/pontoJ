@@ -34,6 +34,33 @@ class Store(context: Context) {
             prefs.edit().putString(KEY_MONTH_GOAL, value.toString()).apply()
         }
 
+    /** Notificação fixa com o tempo correndo enquanto há um ponto aberto. */
+    var notifyEnabled: Boolean
+        get() = prefs.getBoolean("notify_enabled", true)
+        set(value) {
+            prefs.edit().putBoolean("notify_enabled", value).apply()
+        }
+
+    /** Avisos: meta do dia batida e jornada muito longa (possível esquecimento da saída). */
+    var alertsEnabled: Boolean
+        get() = prefs.getBoolean("alerts_enabled", true)
+        set(value) {
+            prefs.edit().putBoolean("alerts_enabled", value).apply()
+        }
+
+    /** Último registro para o qual cada aviso já foi dado (evita repetir). */
+    var goalAlertSessionId: Long
+        get() = prefs.getLong("goal_alert_id", 0L)
+        set(value) {
+            prefs.edit().putLong("goal_alert_id", value).apply()
+        }
+
+    var longAlertSessionId: Long
+        get() = prefs.getLong("long_alert_id", 0L)
+        set(value) {
+            prefs.edit().putLong("long_alert_id", value).apply()
+        }
+
     var hideValues: Boolean
         get() = prefs.getBoolean("hide_values", false)
         set(value) {
