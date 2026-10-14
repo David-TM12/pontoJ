@@ -13,6 +13,7 @@ import br.com.pontopj.data.Store
 import br.com.pontopj.data.WorkSession
 import br.com.pontopj.location.reverseGeocode
 import br.com.pontopj.notify.AppBus
+import br.com.pontopj.sync.WatchSync
 import br.com.pontopj.notify.TrackingService
 import br.com.pontopj.ui.Accents
 import br.com.pontopj.ui.ThemeMode
@@ -26,12 +27,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         Privacy.persist = {
             store.hideValues = it
             TrackingService.sync(app) // a notificação acompanha o olho na hora
+            WatchSync.push(app)
         }
         ThemeState.mode = ThemeMode.entries.getOrElse(store.themeMode) { ThemeMode.System }
         ThemeState.accentIndex = store.accentIndex.coerceIn(Accents.indices)
         // O botão "Registrar saída" da notificação mexe nos registros fora do app.
         AppBus.onSessionsChanged = { reload() }
         TrackingService.sync(app)
+        WatchSync.push(app)
     }
 
     /** Recarrega os registros do armazenamento (mudaram fora do app, por exemplo pela notificação). */
@@ -67,6 +70,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun changeAccent(index: Int) {
         ThemeState.accentIndex = index.coerceIn(Accents.indices)
         store.accentIndex = ThemeState.accentIndex
+        WatchSync.push(getApplication())
     }
 
     fun changeAlerts(value: Boolean) {
@@ -192,11 +196,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         store.hourlyRate = rate
         store.monthlyGoal = monthGoal
         store.dailyGoalHours = dayGoalHours
+        WatchSync.push(getApplication())
     }
 
     private fun persist(list: List<WorkSession>) {
         sessions = list.sortedByDescending { it.startMillis }
         store.saveSessions(sessions)
         TrackingService.sync(getApplication())
+        WatchSync.push(getApplication())
     }
 }

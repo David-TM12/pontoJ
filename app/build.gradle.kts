@@ -72,4 +72,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    // Sincronização com o relógio (Wear OS).
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")
 }

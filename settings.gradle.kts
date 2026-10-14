@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "PontoPJ"
 include(":app")
+include(":wear")

@@ -25,6 +25,7 @@ Um toque para registrar entrada e saída, ganhos calculados em tempo real e dash
 - [Importar e exportar](#importar-e-exportar)
 - [Privacidade](#privacidade)
 - [Como gerar o APK](#como-gerar-o-apk)
+- [Relógio (Wear OS)](#relógio-wear-os)
 - [Atualizar o app já instalado](#atualizar-o-app-já-instalado)
 - [Tecnologias](#tecnologias)
 - [Estrutura do projeto](#estrutura-do-projeto)
@@ -108,6 +109,26 @@ Os dados ficam só no celular.
 
 Com JDK 17 e o Android SDK: `./gradlew assembleDebug`
 
+## Relógio (Wear OS)
+
+O módulo `wear/` é o app do relógio (testado em mente para o Galaxy Watch 7, Wear OS 5). Ele **sincroniza com o celular**: o histórico, o valor da hora e as metas ficam no celular, e o relógio mostra e comanda o ponto.
+
+- **No relógio:** cronômetro do dia, ganho em tempo real, anel da meta diária ao redor da tela, botão **Registrar entrada/saída** e o total do mês. Respeita o olho de ocultar valores e usa a cor de destaque escolhida no celular.
+- **Sincronização:** bater o ponto no relógio atualiza o celular (e a notificação dele) e vice-versa. Os comandos chegam ao celular mesmo com o app fechado. Se o relógio estiver sem conexão com o celular, ele avisa.
+- **Como funciona:** o celular envia o estado pela camada de dados do Wear OS (`DataClient`) e recebe os comandos por mensagens (`MessageClient`). Os dois apps usam o mesmo `applicationId` e a mesma chave de assinatura (`app/pontopj.keystore`), que é o que o Wear OS exige para ligá-los. O contrato está em `WearProtocol.kt` (uma cópia em cada módulo).
+
+### Como instalar no relógio
+
+1. Gere os APKs (veja abaixo). O GitHub Actions publica dois artefatos: `PontoPJ-apk` (celular) e `PontoPJ-relogio-apk` (relógio).
+2. Instale **primeiro** o APK do celular (atualizando por cima do atual).
+3. No relógio, ative o modo desenvolvedor: Configurações > Sobre o relógio > Informações do software > toque 7 vezes em "Versão do software".
+4. Em Configurações > Opções do desenvolvedor, ligue **Depuração ADB** e **Depuração por Wi-Fi** (relógio e computador na mesma rede Wi-Fi).
+5. No computador, com o `adb` instalado (Android platform-tools): em "Depuração sem fio" > "Parear novo dispositivo", rode `adb pair IP:PORTA` e digite o código; depois `adb connect IP:PORTA`.
+6. Instale: `adb -s IP:PORTA install -r wear-debug.apk`.
+7. Abra o Ponto PJ no relógio. Na primeira vez ele pede os dados ao celular (Bluetooth ligado e o relógio pareado pelo app Galaxy Wearable).
+
+Compilar só o relógio: `./gradlew :wear:assembleDebug` (saída em `wear/build/outputs/apk/debug/wear-debug.apk`).
+
 ## Atualizar o app já instalado
 
 O APK é assinado com a chave fixa `app/pontopj.keystore`. Daqui para frente, instalar uma versão nova por cima mantém os registros.
@@ -143,6 +164,8 @@ app/src/main/java/br/com/pontopj/
 │   ├── Importer.kt          # leitura de xlsx/csv e exportação
 │   └── Files.kt             # salvar em Downloads
 ├── location/LocationTracker.kt
+├── notify/                  # notificação do ponto, serviço, botão de saída
+├── sync/                    # sincronização com o relógio (celular)
 └── ui/
     ├── Theme.kt             # paleta preto + amarelo escuro
     ├── Components.kt        # cartões, anéis, botão de olho, linhas de registro
@@ -152,6 +175,7 @@ app/src/main/java/br/com/pontopj/
     ├── ReportsScreen.kt
     ├── SettingsScreen.kt
     └── SessionDialog.kt, PdfDialog.kt, ImportDialog.kt, TimeField.kt
+wear/                        # app do relógio (Wear OS)
 docs/screenshots/            # imagens usadas neste README
 ```
 
