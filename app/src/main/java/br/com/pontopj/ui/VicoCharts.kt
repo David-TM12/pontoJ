@@ -125,7 +125,12 @@ private object SilentMarker : CartesianMarker
 private fun yAxisFormatter(): CartesianValueFormatter =
     remember {
         CartesianValueFormatter { _, value, _ ->
-            if (Privacy.hidden) "" else compactPlain(value)
+            // Os eixos da Vico não aceitam texto vazio: valor oculto vira pontinhos e o zero vira "0".
+            when {
+                Privacy.hidden -> "•••"
+                value <= 0.0 -> "0"
+                else -> compactPlain(value)
+            }
         }
     }
 
@@ -203,7 +208,7 @@ fun EarningsChart(
         CartesianValueFormatter { _, value, _ ->
             val d = datesState.value.getOrNull(value.roundToInt())
             when {
-                d == null -> ""
+                d == null -> " "
                 n <= 8 -> shortWeekday(d.dayOfWeek)
                 else -> "${d.dayOfMonth}"
             }
@@ -446,7 +451,7 @@ fun BarChart(
     val axisLabel = rememberAxisLabelComponent(color = Palette.Muted, textSize = 10.sp)
     val axisLine = rememberAxisLineComponent(fill = fill(Palette.Outline), thickness = 1.dp)
     val xFormatter = remember {
-        CartesianValueFormatter { _, value, _ -> labelsState.value.getOrElse(value.roundToInt()) { "" } }
+        CartesianValueFormatter { _, value, _ -> labelsState.value.getOrElse(value.roundToInt()) { " " }.ifEmpty { " " } }
     }
 
     val chart = rememberCartesianChart(
