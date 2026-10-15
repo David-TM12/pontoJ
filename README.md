@@ -144,7 +144,7 @@ Se a versão antiga foi assinada com outra chave (por exemplo, uma compilação 
 | Build | Gradle 8.14, Android Gradle Plugin 8.13 |
 | Armazenamento | SharedPreferences + JSON |
 | Localização | `LocationManager` + `Geocoder` (endereço) |
-| Gráficos | Desenhados à mão em Canvas (barras, linha suave, área, rosca, calendário) |
+| Gráficos | [Vico](https://github.com/patrykandpatrick/vico) (barras, linhas suaves e áreas); rosca, calendário e barras horizontais desenhados em Canvas |
 | PDF | `android.graphics.pdf.PdfDocument`, salvo via MediaStore |
 | Importação | Leitor próprio de `.xlsx` (ZIP + XML) e de `.csv` |
 | CI | GitHub Actions |
@@ -169,7 +169,8 @@ app/src/main/java/br/com/pontopj/
 └── ui/
     ├── Theme.kt             # paleta preto + amarelo escuro
     ├── Components.kt        # cartões, anéis, botão de olho, linhas de registro
-    ├── Charts.kt            # gráficos
+    ├── VicoCharts.kt        # gráficos de barras/linhas/áreas (Vico)
+    ├── Charts.kt            # rosca, calendário, barras horizontais e filtros
     ├── HomeScreen.kt        # Ponto
     ├── DashboardScreen.kt
     ├── ReportsScreen.kt

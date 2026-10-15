@@ -56,7 +56,7 @@ kotlin {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
+    val composeBom = platform("androidx.compose:compose-bom:2025.12.01")
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.17.0")
@@ -72,6 +72,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    // Gráficos (barras, linhas e áreas) — https://github.com/patrykandpatrick/vico
+    implementation("com.patrykandpatrick.vico:compose:2.4.3")
 
     // Sincronização com o relógio (Wear OS).
     implementation("com.google.android.gms:play-services-wearable:18.2.0")
