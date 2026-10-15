@@ -23,6 +23,8 @@ Etapa 1 (feita): app do relógio com tela principal e sincronização com o celu
 
 Etapa 1.5 (feita): página de resumo do mês no relógio e vibração ao bater a meta do dia.
 
+Etapa 1.6 (feita): telas Hoje, Semana e Ajustes no relógio; ritmo por dia útil no resumo do mês.
+
 Etapa 2 (a fazer):
 - Tile (painel ao deslizar o mostrador) com tempo, ganho e botão de saída.
 - Complicação para o mostrador (tempo trabalhado ou ganho do dia).

@@ -77,24 +77,30 @@ private fun formatClock(millis: Long): String {
 private fun formatBrl(value: Double, hidden: Boolean): String =
     if (hidden) "R$ ••••" else NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(value)
 
-/** Duas páginas: 1) ponto e cronômetro, 2) resumo do mês. Deslize para os lados. */
+/** Cinco páginas (deslize para os lados): Ponto, Hoje, Semana, Mês e Ajustes. */
 @Composable
 fun WatchApp() {
-    val pager = rememberPagerState(pageCount = { 2 })
+    val pager = rememberPagerState(pageCount = { PAGE_COUNT })
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Bg),
     ) {
         HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
-            if (page == 0) ClockPage() else SummaryPage()
+            when (page) {
+                0 -> ClockPage()
+                1 -> TodayPage()
+                2 -> WeekPage()
+                3 -> SummaryPage()
+                else -> SettingsPage()
+            }
         }
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 14.dp),
         ) {
-            repeat(2) { i ->
+            repeat(PAGE_COUNT) { i ->
                 Box(
                     Modifier
                         .padding(horizontal = 2.dp)
@@ -103,6 +109,214 @@ fun WatchApp() {
                         .background(if (pager.currentPage == i) TextColor else Track),
                 )
             }
+        }
+    }
+}
+
+
+private const val PAGE_COUNT = 5
+
+/** Hora atual que anda sozinha a cada segundo. */
+@Composable
+private fun rememberNow(): Long {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(1000L)
+        }
+    }
+    return now
+}
+
+private fun clockLabel(epochMs: Long): String =
+    java.text.SimpleDateFormat("HH:mm", Locale.US).format(java.util.Date(epochMs))
+
+private fun formatHm(millis: Long): String {
+    val minutes = millis.coerceAtLeast(0L) / 60_000L
+    return String.format(Locale.US, "%dh %02dmin", minutes / 60, minutes % 60)
+}
+
+/** Hoje: previsão de saída, quanto falta para a meta e os períodos do dia. */
+@Composable
+private fun TodayPage() {
+    val state by StateRepo.state.collectAsState()
+    val now = rememberNow()
+    val st = state
+    val accent = Color(st?.accent ?: StateRepo.DEFAULT_ACCENT)
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (st == null) {
+            Label("Sincronize com o celular", Muted)
+            return@Box
+        }
+        val goalMs = (st.goalHours * 3_600_000.0).toLong()
+        val dayMs = st.dayMillis(now)
+        val missing = goalMs - dayMs
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Label("HOJE", accent, bold = true)
+            Spacer(Modifier.height(2.dp))
+            when {
+                goalMs <= 0L -> BigText(formatHm(dayMs), TextColor)
+                missing <= 0L -> {
+                    BigText("Meta batida", accent)
+                    Label("+${formatHm(-missing)} extras", Muted)
+                }
+                st.active -> {
+                    Label("Saída prevista", Muted)
+                    BigText(clockLabel(now + missing), accent)
+                    Label("faltam ${formatHm(missing)}", Muted)
+                }
+                else -> {
+                    Label("Faltam para a meta", Muted)
+                    BigText(formatHm(missing), TextColor)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            val spans = st.todaySpans.chunked(2).filter { it.size == 2 }.takeLast(3)
+            spans.forEach { span ->
+                Label("${clockLabel(span[0])} → ${clockLabel(span[1])}", TextColor)
+            }
+            if (st.active) {
+                Label("${clockLabel(st.openStart)} → agora", accent)
+            }
+            if (spans.isEmpty() && !st.active) Label("Nenhum registro hoje", Muted)
+            Spacer(Modifier.height(4.dp))
+            Label("Total: ${formatHm(dayMs)}", Muted)
+        }
+    }
+}
+
+@Composable
+private fun BigText(text: String, color: Color) {
+    BasicText(
+        text,
+        style = TextStyle(
+            color = color,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            fontFeatureSettings = "tnum",
+        ),
+    )
+}
+
+/** Semana: horas de segunda a domingo, em barras. */
+@Composable
+private fun WeekPage() {
+    val state by StateRepo.state.collectAsState()
+    val now = rememberNow()
+    val st = state
+    val accent = Color(st?.accent ?: StateRepo.DEFAULT_ACCENT)
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (st == null) {
+            Label("Sincronize com o celular", Muted)
+            return@Box
+        }
+        val week = st.weekLive(now)
+        val total = week.sum()
+        val worked = week.count { it > 0L }
+        val letters = listOf("S", "T", "Q", "Q", "S", "S", "D")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 26.dp, vertical = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Label("ESTA SEMANA", accent, bold = true)
+            BigText(formatHm(total), TextColor)
+            Spacer(Modifier.height(6.dp))
+            Canvas(Modifier.width(120.dp).height(46.dp)) {
+                val maxValue = (week.maxOrNull() ?: 0L).coerceAtLeast(1L)
+                val slot = size.width / 7f
+                val barWidth = slot * 0.58f
+                week.forEachIndexed { i, value ->
+                    val h = (value.toFloat() / maxValue * size.height).coerceAtLeast(3.dp.toPx())
+                    drawRoundRect(
+                        color = when {
+                            i == st.weekToday -> accent
+                            value > 0L -> accent.copy(alpha = 0.5f)
+                            else -> Track
+                        },
+                        topLeft = Offset(slot * i + (slot - barWidth) / 2f, size.height - h),
+                        size = Size(barWidth, h),
+                        cornerRadius = CornerRadius(3.dp.toPx()),
+                    )
+                }
+            }
+            Row(Modifier.width(120.dp)) {
+                letters.forEachIndexed { i, l ->
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        BasicText(
+                            l,
+                            style = TextStyle(color = if (i == st.weekToday) accent else Muted, fontSize = 9.sp),
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            if (worked > 0) Label("Média: ${formatHm(total / worked)} por dia", Muted)
+            val goalWeekMs = (st.goalHours * 3_600_000.0).toLong() * 5
+            if (goalWeekMs > 0L) {
+                Label(
+                    String.format(Locale.US, "%.0f%% de %s", (total.toFloat() / goalWeekMs * 100f).coerceAtMost(999f), formatHm(goalWeekMs)),
+                    Muted,
+                )
+            }
+        }
+    }
+}
+
+/** Ajustes rápidos: ocultar valores e sincronizar. */
+@Composable
+private fun SettingsPage() {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val state by StateRepo.state.collectAsState()
+    val st = state
+    val accent = Color(st?.accent ?: StateRepo.DEFAULT_ACCENT)
+    var message by remember { mutableStateOf<String?>(null) }
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 26.dp, vertical = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Label("AJUSTES", accent, bold = true)
+            Spacer(Modifier.height(8.dp))
+            if (st != null) {
+                PillButton(if (st.hide) "Mostrar valores" else "Ocultar valores", accent, enabled = true) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    message = null
+                    StateRepo.optimistic(context) { it.copy(hide = !it.hide) }
+                    PhoneLink.send(context, WearProtocol.PATH_TOGGLE_HIDE) { delivered ->
+                        if (!delivered) message = "Sem conexão com o celular"
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+            }
+            PillButton("Sincronizar", accent, enabled = true) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                PhoneLink.refresh(context)
+                message = "Pedido enviado ao celular"
+            }
+            Spacer(Modifier.height(6.dp))
+            val updated = st?.updatedAt ?: 0L
+            Label(
+                message ?: if (updated > 0L) "Atualizado às ${clockLabel(updated)}" else "Ainda sem dados",
+                if (message == "Sem conexão com o celular") Color(0xFFE5533D) else Muted,
+            )
         }
     }
 }
@@ -159,6 +373,10 @@ private fun SummaryPage() {
                 Label(String.format(Locale.US, "%.0f%% da meta mensal", fraction * 100f), Muted)
             } else {
                 Label("Defina a meta no celular", Muted)
+            }
+            val missingMonth = st.monthGoal - monthEarnings
+            if (!st.hide && missingMonth > 0.0 && st.remainingDays > 0) {
+                Label("Ritmo: ${formatBrl(missingMonth / st.remainingDays, false)} por dia útil", Muted)
             }
             Spacer(Modifier.height(8.dp))
             val bars = st.last7Live(now)

@@ -24,7 +24,17 @@ data class WatchState(
     val projection: Double = 0.0,
     /** Ganho dos últimos 7 dias, do mais antigo ao de hoje (o de hoje só com registros fechados). */
     val last7: List<Float> = List(7) { 0f },
+    /** Períodos fechados de hoje: entrada, saída, entrada, saída... */
+    val todaySpans: List<Long> = emptyList(),
+    /** Horas de cada dia da semana (segunda a domingo), só registros fechados. */
+    val weekMillis: List<Long> = List(7) { 0L },
+    val weekToday: Int = 0,
+    val remainingDays: Int = 0,
 ) {
+    /** Horas de cada dia da semana; hoje soma o registro aberto. */
+    fun weekLive(now: Long): List<Long> =
+        weekMillis.mapIndexed { i, v -> if (i == weekToday) v + openMillis(now) else v }
+
     /** Horas de hoje, somando o registro aberto em tempo real. */
     fun dayMillis(now: Long): Long = dayBaseMillis + openMillis(now)
 
@@ -32,7 +42,7 @@ data class WatchState(
 
     fun monthEarnings(now: Long): Double = monthBaseEarnings + openEarnings(now)
 
-    private fun openMillis(now: Long): Long = if (active) (now - openStart).coerceAtLeast(0L) else 0L
+    fun openMillis(now: Long): Long = if (active) (now - openStart).coerceAtLeast(0L) else 0L
 
     private fun openEarnings(now: Long): Double = openMillis(now) / 3_600_000.0 * openRate
 
@@ -77,6 +87,10 @@ object StateRepo {
             streak = p.getInt(WearProtocol.K_STREAK, 0),
             projection = p.getString(WearProtocol.K_PROJECTION, "0")?.toDoubleOrNull() ?: 0.0,
             last7 = parseLast7(p.getString(WearProtocol.K_LAST7, null)),
+            todaySpans = parseLongs(p.getString(WearProtocol.K_TODAY_SPANS, null)),
+            weekMillis = parseLongs(p.getString(WearProtocol.K_WEEK_MILLIS, null)).let { if (it.size == 7) it else List(7) { 0L } },
+            weekToday = p.getInt(WearProtocol.K_WEEK_TODAY, 0),
+            remainingDays = p.getInt(WearProtocol.K_REMAIN_DAYS, 0),
         )
     }
 
@@ -98,6 +112,10 @@ object StateRepo {
             streak = map.getInt(WearProtocol.K_STREAK),
             projection = map.getDouble(WearProtocol.K_PROJECTION),
             last7 = (map.getFloatArray(WearProtocol.K_LAST7) ?: FloatArray(7)).toList(),
+            todaySpans = (map.getLongArray(WearProtocol.K_TODAY_SPANS) ?: LongArray(0)).toList(),
+            weekMillis = (map.getLongArray(WearProtocol.K_WEEK_MILLIS) ?: LongArray(7)).toList(),
+            weekToday = map.getInt(WearProtocol.K_WEEK_TODAY),
+            remainingDays = map.getInt(WearProtocol.K_REMAIN_DAYS),
         )
         // Ignora um estado mais velho que o já guardado (a ordem de chegada pode variar).
         val current = _state.value
@@ -130,8 +148,15 @@ object StateRepo {
             .putInt(WearProtocol.K_STREAK, s.streak)
             .putString(WearProtocol.K_PROJECTION, s.projection.toString())
             .putString(WearProtocol.K_LAST7, s.last7.joinToString(","))
+            .putString(WearProtocol.K_TODAY_SPANS, s.todaySpans.joinToString(","))
+            .putString(WearProtocol.K_WEEK_MILLIS, s.weekMillis.joinToString(","))
+            .putInt(WearProtocol.K_WEEK_TODAY, s.weekToday)
+            .putInt(WearProtocol.K_REMAIN_DAYS, s.remainingDays)
             .apply()
     }
+
+    private fun parseLongs(raw: String?): List<Long> =
+        raw?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList()
 
     private fun parseLast7(raw: String?): List<Float> {
         val parsed = raw?.split(",")?.mapNotNull { it.toFloatOrNull() } ?: emptyList()

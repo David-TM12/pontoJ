@@ -10,6 +10,7 @@ object WearProtocol {
     const val PATH_CLOCK_IN = "/ponto/cmd/clock_in"
     const val PATH_CLOCK_OUT = "/ponto/cmd/clock_out"
     const val PATH_REQUEST_STATE = "/ponto/cmd/request_state"
+    const val PATH_TOGGLE_HIDE = "/ponto/cmd/toggle_hide"
 
     const val K_ACTIVE = "active"
     const val K_OPEN_START = "open_start"
@@ -26,5 +27,9 @@ object WearProtocol {
     const val K_STREAK = "streak"
     const val K_PROJECTION = "projection"
     const val K_LAST7 = "last7"
+    const val K_TODAY_SPANS = "today_spans"
+    const val K_WEEK_MILLIS = "week_millis"
+    const val K_WEEK_TODAY = "week_today"
+    const val K_REMAIN_DAYS = "remain_days"
     const val K_UPDATED_AT = "updated_at"
 }

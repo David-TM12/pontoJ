@@ -39,6 +39,13 @@ object WatchSync {
                 closed.onDate(todayDate.minusDays((6 - i).toLong())).totalEarnings(now).toFloat()
             }
 
+            // Registros fechados de hoje (entrada, saída, entrada, saída...), no máximo 8 períodos.
+            val spans = closed.onDate(todayDate).sortedBy { it.startMillis }.take(8)
+                .flatMap { listOf(it.startMillis, it.endMillis ?: it.startMillis) }.toLongArray()
+            // Horas de cada dia da semana atual (segunda a domingo).
+            val monday = todayDate.minusDays((todayDate.dayOfWeek.value - 1).toLong())
+            val week = LongArray(7) { i -> closed.onDate(monday.plusDays(i.toLong())).totalMillis(now) }
+
             val request = PutDataMapRequest.create(WearProtocol.PATH_STATE).apply {
                 dataMap.putBoolean(WearProtocol.K_ACTIVE, open != null)
                 dataMap.putLong(WearProtocol.K_OPEN_START, open?.startMillis ?: 0L)
@@ -53,6 +60,10 @@ object WatchSync {
                 dataMap.putInt(WearProtocol.K_STREAK, extra.streak)
                 dataMap.putDouble(WearProtocol.K_PROJECTION, projection)
                 dataMap.putFloatArray(WearProtocol.K_LAST7, last7)
+                dataMap.putLongArray(WearProtocol.K_TODAY_SPANS, spans)
+                dataMap.putLongArray(WearProtocol.K_WEEK_MILLIS, week)
+                dataMap.putInt(WearProtocol.K_WEEK_TODAY, todayDate.dayOfWeek.value - 1)
+                dataMap.putInt(WearProtocol.K_REMAIN_DAYS, extra.remainingBusinessDays)
                 dataMap.putBoolean(WearProtocol.K_HIDE, store.hideValues)
                 dataMap.putInt(WearProtocol.K_ACCENT, Accents[store.accentIndex.coerceIn(Accents.indices)].color.toArgb())
                 // Muda a cada envio, para o relógio sempre receber a atualização.
