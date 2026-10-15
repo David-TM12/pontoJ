@@ -9,6 +9,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -71,8 +77,118 @@ private fun formatClock(millis: Long): String {
 private fun formatBrl(value: Double, hidden: Boolean): String =
     if (hidden) "R$ ••••" else NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(value)
 
+/** Duas páginas: 1) ponto e cronômetro, 2) resumo do mês. Deslize para os lados. */
 @Composable
 fun WatchApp() {
+    val pager = rememberPagerState(pageCount = { 2 })
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Bg),
+    ) {
+        HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
+            if (page == 0) ClockPage() else SummaryPage()
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 14.dp),
+        ) {
+            repeat(2) { i ->
+                Box(
+                    Modifier
+                        .padding(horizontal = 2.dp)
+                        .size(4.dp)
+                        .clip(CircleShape)
+                        .background(if (pager.currentPage == i) TextColor else Track),
+                )
+            }
+        }
+    }
+}
+
+private fun formatSignedHm(millis: Long): String {
+    val minutes = kotlin.math.abs(millis) / 60_000L
+    return String.format(Locale.US, "%s%dh %02dmin", if (millis < 0) "-" else "+", minutes / 60, minutes % 60)
+}
+
+@Composable
+private fun SummaryPage() {
+    val state by StateRepo.state.collectAsState()
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(1000L)
+        }
+    }
+    val st = state
+    val accent = Color(st?.accent ?: StateRepo.DEFAULT_ACCENT)
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (st == null) {
+            Label("Sincronize com o celular", Muted)
+            return@Box
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 26.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Label("RESUMO DO MÊS", accent, bold = true)
+            val monthEarnings = st.monthEarnings(now)
+            BasicText(
+                formatBrl(monthEarnings, st.hide),
+                style = TextStyle(color = TextColor, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+            )
+            if (st.monthGoal > 0.0) {
+                val fraction = (monthEarnings / st.monthGoal).coerceIn(0.0, 1.0).toFloat()
+                Spacer(Modifier.height(3.dp))
+                Canvas(Modifier.width(110.dp).height(5.dp)) {
+                    drawRoundRect(Track, cornerRadius = CornerRadius(size.height / 2f))
+                    if (fraction > 0f) {
+                        drawRoundRect(
+                            accent,
+                            size = Size(size.width * fraction, size.height),
+                            cornerRadius = CornerRadius(size.height / 2f),
+                        )
+                    }
+                }
+                Label(String.format(Locale.US, "%.0f%% da meta mensal", fraction * 100f), Muted)
+            } else {
+                Label("Defina a meta no celular", Muted)
+            }
+            Spacer(Modifier.height(8.dp))
+            val bars = st.last7Live(now)
+            Canvas(Modifier.width(112.dp).height(34.dp)) {
+                val maxValue = (bars.maxOrNull() ?: 0f).coerceAtLeast(0.01f)
+                val slot = size.width / bars.size
+                val barWidth = slot * 0.56f
+                bars.forEachIndexed { i, value ->
+                    val h = (value / maxValue * size.height).coerceAtLeast(3.dp.toPx())
+                    drawRoundRect(
+                        color = if (i == bars.lastIndex) accent else accent.copy(alpha = 0.45f),
+                        topLeft = Offset(slot * i + (slot - barWidth) / 2f, size.height - h),
+                        size = Size(barWidth, h),
+                        cornerRadius = CornerRadius(3.dp.toPx()),
+                    )
+                }
+            }
+            Label("últimos 7 dias", Muted)
+            Spacer(Modifier.height(6.dp))
+            Label("Saldo de horas: ${formatSignedHm(st.balance(now))}", if (st.balance(now) >= 0) TextColor else Color(0xFFE5533D))
+            Label(if (st.streak == 1) "Sequência: 1 dia" else "Sequência: ${st.streak} dias", Muted)
+            if (st.projection > 0.0 && !st.hide) {
+                Label("Projeção: ${formatBrl(st.projection, false)}", Muted)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClockPage() {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val state by StateRepo.state.collectAsState()
@@ -102,6 +218,16 @@ fun WatchApp() {
 
     val st = state
     val accent = Color(st?.accent ?: StateRepo.DEFAULT_ACCENT)
+
+    // Vibra uma vez quando a meta do dia é batida com o ponto aberto (não vibra se já estava batida ao abrir).
+    val goalReached = st != null && st.goalHours > 0.0 && st.dayMillis(now) >= (st.goalHours * 3_600_000.0).toLong()
+    var lastReached by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(goalReached) {
+        if (lastReached == false && goalReached && st?.active == true) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        lastReached = goalReached
+    }
 
     Box(
         modifier = Modifier

@@ -34,6 +34,7 @@ import br.com.pontopj.data.daySummaries
 import br.com.pontopj.data.earningsUntilDay
 import br.com.pontopj.data.extraStats
 import br.com.pontopj.data.formatHm
+import br.com.pontopj.data.formatSignedHm
 import br.com.pontopj.data.inMonth
 import br.com.pontopj.data.millisByPeriod
 import br.com.pontopj.data.minutesToClock
@@ -304,6 +305,21 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
                 formatHm(extra.longestDayMillis),
                 Modifier.weight(1f),
                 sub = extra.longestDayDate?.format(DateTimeFormatter.ofPattern("dd/MM")),
+            )
+        }
+        TileRow {
+            StatTile(
+                "Banco de horas",
+                formatSignedHm(extra.balanceMillis),
+                Modifier.weight(1f),
+                sub = "esperado até hoje: ${formatHm(extra.expectedMillis)}",
+                valueColor = if (extra.balanceMillis >= 0) Palette.Gold else Palette.Danger,
+            )
+            StatTile(
+                "Dias úteis restantes",
+                "${extra.remainingBusinessDays}",
+                Modifier.weight(1f),
+                sub = "no mês",
             )
         }
         TileRow {

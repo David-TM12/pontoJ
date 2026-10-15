@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import br.com.pontopj.AppViewModel
+import br.com.pontopj.CrashLog
 import br.com.pontopj.data.ImportException
 import br.com.pontopj.data.Privacy
 import br.com.pontopj.data.ImportedSheet
@@ -282,6 +283,84 @@ fun SettingsScreen(vm: AppViewModel, hasPermission: Boolean, onRequestPermission
                 "meta do dia batida e lembrete se esquecer a saída (12 h aberto)",
                 vm.alertsEnabled,
             ) { vm.changeAlerts(it) }
+
+            Spacer(Modifier.height(10.dp))
+            SwitchRow(
+                "Lembrete de entrada",
+                "de segunda a sexta, avisa se você ainda não registrou a entrada",
+                vm.reminderEnabled,
+            ) { vm.changeReminder(it) }
+            if (vm.reminderEnabled) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Horário", color = Palette.Text, modifier = Modifier.weight(1f))
+                    OutlinedButton(onClick = { vm.changeReminderTime((vm.reminderMinutes - 15 + 1440) % 1440) }) {
+                        Text("−15 min", color = Palette.Gold)
+                    }
+                    Text(
+                        String.format("%02d:%02d", vm.reminderMinutes / 60, vm.reminderMinutes % 60),
+                        color = Palette.Gold,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    OutlinedButton(onClick = { vm.changeReminderTime((vm.reminderMinutes + 15) % 1440) }) {
+                        Text("+15 min", color = Palette.Gold)
+                    }
+                }
+                Text(
+                    "O Android pode atrasar o aviso alguns minutos para economizar bateria.",
+                    color = Palette.Muted,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+            Text("Atalho rápido", color = Palette.Text, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Puxe a barra de status duas vezes, toque no lápis e arraste o bloco \"Ponto PJ\" para as " +
+                    "Configurações Rápidas. Um toque nele registra entrada ou saída sem abrir o app.",
+                color = Palette.Muted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+
+        val crashContext = LocalContext.current
+        var crashText by remember { mutableStateOf(CrashLog.read(crashContext)) }
+        crashText?.let { text ->
+            AppCard {
+                SectionTitle("Último erro do app")
+                Text(
+                    "O app fechou sozinho da última vez. Toque em Copiar e envie este texto ao desenvolvedor.",
+                    color = Palette.Muted,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                )
+                androidx.compose.foundation.text.selection.SelectionContainer {
+                    Text(
+                        text.take(1800),
+                        color = Palette.Text,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(onClick = {
+                        val clipboard = crashContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                            as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("erro", text))
+                    }) { Text("Copiar", color = Palette.Gold) }
+                    TextButton(onClick = {
+                        CrashLog.clear(crashContext)
+                        crashText = null
+                    }) { Text("Limpar", color = Palette.Muted) }
+                }
+            }
         }
 
         AppCard {

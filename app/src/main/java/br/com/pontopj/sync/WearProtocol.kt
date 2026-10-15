@@ -25,5 +25,9 @@ object WearProtocol {
     const val K_GOAL_HOURS = "goal_hours"
     const val K_HIDE = "hide"
     const val K_ACCENT = "accent"
+    const val K_BALANCE = "balance_millis"
+    const val K_STREAK = "streak"
+    const val K_PROJECTION = "projection"
+    const val K_LAST7 = "last7"
     const val K_UPDATED_AT = "updated_at"
 }

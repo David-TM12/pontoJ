@@ -27,6 +27,7 @@ object Notifier {
     const val ID_ONGOING = 1001
     const val ID_GOAL = 1002
     const val ID_LONG = 1003
+    const val ID_REMINDER = 1004
 
     private const val GOLD = 0xFFF5BA1E.toInt()
 
@@ -40,7 +41,7 @@ object Notifier {
         )
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL_ALERTS, "Avisos do ponto", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Meta do dia batida e lembrete de saída esquecida"
+                description = "Meta do dia batida, lembrete de entrada e de saída esquecida"
             },
         )
     }
@@ -60,6 +61,41 @@ object Notifier {
             Intent(context, ClockOutReceiver::class.java).setAction(ClockOutReceiver.ACTION_CLOCK_OUT),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+
+    private fun clockInIntent(context: Context): PendingIntent =
+        PendingIntent.getBroadcast(
+            context,
+            2,
+            Intent(context, ClockInReceiver::class.java).setAction(ClockInReceiver.ACTION_CLOCK_IN),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+    /** Lembrete de entrada, com o botão "Registrar entrada". */
+    @SuppressLint("MissingPermission")
+    fun entryReminder(context: Context) {
+        val nm = NotificationManagerCompat.from(context)
+        if (!nm.areNotificationsEnabled()) return
+        ensureChannels(context)
+        val text = "Você ainda não registrou a entrada de hoje."
+        nm.notify(
+            ID_REMINDER,
+            NotificationCompat.Builder(context, CHANNEL_ALERTS)
+                .setSmallIcon(R.drawable.ic_stat_clock)
+                .setColor(GOLD)
+                .setContentTitle("Hora de bater o ponto ⏰")
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setContentIntent(openAppIntent(context))
+                .addAction(0, "Registrar entrada", clockInIntent(context))
+                .build(),
+        )
+    }
+
+    fun cancelReminder(context: Context) {
+        NotificationManagerCompat.from(context).cancel(ID_REMINDER)
+    }
 
     private fun vis(show: Boolean): Int = if (show) View.VISIBLE else View.GONE
 

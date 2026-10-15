@@ -19,6 +19,11 @@ data class WatchState(
     val hide: Boolean,
     val accent: Int,
     val updatedAt: Long,
+    val balanceMillis: Long = 0L,
+    val streak: Int = 0,
+    val projection: Double = 0.0,
+    /** Ganho dos últimos 7 dias, do mais antigo ao de hoje (o de hoje só com registros fechados). */
+    val last7: List<Float> = List(7) { 0f },
 ) {
     /** Horas de hoje, somando o registro aberto em tempo real. */
     fun dayMillis(now: Long): Long = dayBaseMillis + openMillis(now)
@@ -30,6 +35,13 @@ data class WatchState(
     private fun openMillis(now: Long): Long = if (active) (now - openStart).coerceAtLeast(0L) else 0L
 
     private fun openEarnings(now: Long): Double = openMillis(now) / 3_600_000.0 * openRate
+
+    /** Banco de horas do mês; com o ponto aberto, cresce junto com o relógio. */
+    fun balance(now: Long): Long = balanceMillis + if (active) (now - updatedAt).coerceAtLeast(0L) else 0L
+
+    /** Os 7 dias para o gráfico: o último soma o registro aberto em tempo real. */
+    fun last7Live(now: Long): List<Float> =
+        last7.mapIndexed { i, v -> if (i == last7.lastIndex) v + openEarnings(now).toFloat() else v }
 
     /** Fração (0 a 1) da meta diária já cumprida. */
     fun goalProgress(now: Long): Float {
@@ -61,6 +73,10 @@ object StateRepo {
             hide = p.getBoolean(WearProtocol.K_HIDE, false),
             accent = p.getInt(WearProtocol.K_ACCENT, DEFAULT_ACCENT),
             updatedAt = p.getLong(WearProtocol.K_UPDATED_AT, 0L),
+            balanceMillis = p.getLong(WearProtocol.K_BALANCE, 0L),
+            streak = p.getInt(WearProtocol.K_STREAK, 0),
+            projection = p.getString(WearProtocol.K_PROJECTION, "0")?.toDoubleOrNull() ?: 0.0,
+            last7 = parseLast7(p.getString(WearProtocol.K_LAST7, null)),
         )
     }
 
@@ -78,6 +94,10 @@ object StateRepo {
             hide = map.getBoolean(WearProtocol.K_HIDE),
             accent = map.getInt(WearProtocol.K_ACCENT, DEFAULT_ACCENT),
             updatedAt = map.getLong(WearProtocol.K_UPDATED_AT),
+            balanceMillis = map.getLong(WearProtocol.K_BALANCE),
+            streak = map.getInt(WearProtocol.K_STREAK),
+            projection = map.getDouble(WearProtocol.K_PROJECTION),
+            last7 = (map.getFloatArray(WearProtocol.K_LAST7) ?: FloatArray(7)).toList(),
         )
         // Ignora um estado mais velho que o já guardado (a ordem de chegada pode variar).
         val current = _state.value
@@ -106,7 +126,16 @@ object StateRepo {
             .putBoolean(WearProtocol.K_HIDE, s.hide)
             .putInt(WearProtocol.K_ACCENT, s.accent)
             .putLong(WearProtocol.K_UPDATED_AT, s.updatedAt)
+            .putLong(WearProtocol.K_BALANCE, s.balanceMillis)
+            .putInt(WearProtocol.K_STREAK, s.streak)
+            .putString(WearProtocol.K_PROJECTION, s.projection.toString())
+            .putString(WearProtocol.K_LAST7, s.last7.joinToString(","))
             .apply()
+    }
+
+    private fun parseLast7(raw: String?): List<Float> {
+        val parsed = raw?.split(",")?.mapNotNull { it.toFloatOrNull() } ?: emptyList()
+        return if (parsed.size == 7) parsed else List(7) { 0f }
     }
 
     const val DEFAULT_ACCENT = 0xFFF5BA1E.toInt()

@@ -14,6 +14,7 @@ import br.com.pontopj.data.WorkSession
 import br.com.pontopj.location.reverseGeocode
 import br.com.pontopj.notify.AppBus
 import br.com.pontopj.sync.WatchSync
+import br.com.pontopj.notify.EntryReminder
 import br.com.pontopj.notify.TrackingService
 import br.com.pontopj.ui.Accents
 import br.com.pontopj.ui.ThemeMode
@@ -35,6 +36,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         AppBus.onSessionsChanged = { reload() }
         TrackingService.sync(app)
         WatchSync.push(app)
+        EntryReminder.schedule(app)
     }
 
     /** Recarrega os registros do armazenamento (mudaram fora do app, por exemplo pela notificação). */
@@ -71,6 +73,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         ThemeState.accentIndex = index.coerceIn(Accents.indices)
         store.accentIndex = ThemeState.accentIndex
         WatchSync.push(getApplication())
+    }
+
+    var reminderEnabled by mutableStateOf(store.reminderEnabled)
+        private set
+    var reminderMinutes by mutableStateOf(store.reminderMinutes)
+        private set
+
+    fun changeReminder(enabled: Boolean) {
+        reminderEnabled = enabled
+        store.reminderEnabled = enabled
+        EntryReminder.schedule(getApplication())
+    }
+
+    fun changeReminderTime(minutes: Int) {
+        reminderMinutes = minutes.coerceIn(0, 23 * 60 + 59)
+        store.reminderMinutes = reminderMinutes
+        EntryReminder.schedule(getApplication())
     }
 
     fun changeAlerts(value: Boolean) {

@@ -99,6 +99,20 @@ class Store(context: Context) {
             prefs.edit().putBoolean("hide_values", value).apply()
         }
 
+    /** Lembrete de entrada nos dias úteis. */
+    var reminderEnabled: Boolean
+        get() = prefs.getBoolean("reminder_enabled", false)
+        set(value) {
+            prefs.edit().putBoolean("reminder_enabled", value).apply()
+        }
+
+    /** Horário do lembrete, em minutos desde meia-noite (padrão 09:00). */
+    var reminderMinutes: Int
+        get() = prefs.getInt("reminder_minutes", 9 * 60)
+        set(value) {
+            prefs.edit().putInt("reminder_minutes", value.coerceIn(0, 23 * 60 + 59)).apply()
+        }
+
     var dailyGoalHours: Double
         get() = prefs.getString(KEY_DAY_GOAL, null)?.toDoubleOrNull() ?: 8.0
         set(value) {

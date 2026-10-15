@@ -43,6 +43,7 @@ object ClockActions {
         val now = System.currentTimeMillis()
         val session = WorkSession(id = now, startMillis = now, rate = store.hourlyRate)
         store.saveSessions(listOf(session) + sessions)
+        Notifier.cancelReminder(context)
         TrackingService.sync(context)
         AppBus.notifyChanged()
         WatchSync.push(context)

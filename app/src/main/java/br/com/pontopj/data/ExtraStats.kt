@@ -16,6 +16,9 @@ data class ExtraStats(
     val daysOverGoal: Int,
     val allTimeEarnings: Double,
     val remainingBusinessDays: Int,
+    /** Horas trabalhadas no mês menos as esperadas (meta diária × dias úteis até hoje). */
+    val balanceMillis: Long,
+    val expectedMillis: Long,
 )
 
 private fun isWeekend(d: LocalDate): Boolean =
@@ -53,6 +56,15 @@ fun List<WorkSession>.extraStats(
         0
     }
 
+    // Banco de horas: hoje só entra na conta se já houve registro (o dia ainda não acabou).
+    val upTo = if (month == YearMonth.from(today)) {
+        if (today in dates) today else today.minusDays(1)
+    } else {
+        month.atEndOfMonth()
+    }
+    val expected = goalMs * businessDays(month, upTo)
+    val worked = inMonth(month).totalMillis(now)
+
     return ExtraStats(
         streak = streak,
         longestDayMillis = longest?.millis ?: 0L,
@@ -61,6 +73,8 @@ fun List<WorkSession>.extraStats(
         daysOverGoal = daysOver,
         allTimeEarnings = totalEarnings(now),
         remainingBusinessDays = remaining.coerceAtLeast(0),
+        balanceMillis = worked - expected,
+        expectedMillis = expected,
     )
 }
 
@@ -79,4 +93,10 @@ fun List<WorkSession>.millisByPeriod(now: Long): LongArray {
         }
     }
     return out
+}
+
+/** "+3h 20min" ou "-1h 05min". */
+fun formatSignedHm(millis: Long): String {
+    val sign = if (millis < 0) "-" else "+"
+    return sign + formatHm(kotlin.math.abs(millis))
 }

@@ -73,6 +73,9 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
 - **Extrato diário recente** (Dashboard): últimos dias trabalhados com ganho do dia e variação em relação ao dia anterior; "Ver tudo" abre os Relatórios.
 - **Temas**: claro, escuro ou do sistema, com 5 cores de destaque (dourado, azul, verde, roxo e coral), em Ajustes > Aparência.
 - **Ocultar valores**: o ícone de olho no topo de cada tela esconde todos os valores em R$ (útil em público). A escolha fica salva.
+- **Banco de horas** (Dashboard): horas trabalhadas no mês menos as esperadas (meta diária × dias úteis até hoje), em verde/dourado se positivo e vermelho se negativo.
+- **Lembrete de entrada** (Ajustes > Notificação): de segunda a sexta, no horário escolhido, avisa se você ainda não registrou a entrada, com botão **Registrar entrada** na própria notificação.
+- **Atalho nas Configurações Rápidas**: um bloco "Ponto PJ" para puxar na barra de status e registrar entrada ou saída com um toque, sem abrir o app.
 
 Os dados ficam só no celular.
 
@@ -113,7 +116,7 @@ Com JDK 17 e o Android SDK: `./gradlew assembleDebug`
 
 O módulo `wear/` é o app do relógio (testado em mente para o Galaxy Watch 7, Wear OS 5). Ele **sincroniza com o celular**: o histórico, o valor da hora e as metas ficam no celular, e o relógio mostra e comanda o ponto.
 
-- **No relógio:** cronômetro do dia, ganho em tempo real, anel da meta diária ao redor da tela, botão **Registrar entrada/saída** e o total do mês. Respeita o olho de ocultar valores e usa a cor de destaque escolhida no celular.
+- **No relógio:** cronômetro do dia, ganho em tempo real, anel da meta diária ao redor da tela, botão **Registrar entrada/saída** e o total do mês. Deslizando para o lado há o **resumo do mês**: ganho, progresso da meta mensal, gráfico dos últimos 7 dias, saldo de horas, sequência de dias e projeção. O relógio vibra quando a meta do dia é batida. Respeita o olho de ocultar valores e usa a cor de destaque escolhida no celular.
 - **Sincronização:** bater o ponto no relógio atualiza o celular (e a notificação dele) e vice-versa. Os comandos chegam ao celular mesmo com o app fechado. Se o relógio estiver sem conexão com o celular, ele avisa.
 - **Como funciona:** o celular envia o estado pela camada de dados do Wear OS (`DataClient`) e recebe os comandos por mensagens (`MessageClient`). Os dois apps usam o mesmo `applicationId` e a mesma chave de assinatura (`app/pontopj.keystore`), que é o que o Wear OS exige para ligá-los. O contrato está em `WearProtocol.kt` (uma cópia em cada módulo).
 
