@@ -65,11 +65,11 @@ O visual é preto com amarelo escuro, pensado para leitura rápida e uso com uma
 - **Dashboard**:
   - ganhos do mês, meta, projeção e comparação com o mês anterior;
   - ganhos por dia com filtro de 7, 14, 21 dias ou 1 mês (em lista), barras clicáveis e linha suave de média móvel;
-  - evolução acumulada do mês (com meta e projeção), rosca de horas por período do dia, calendário de atividade, ganhos por semana e horas por dia da semana;
+  - evolução acumulada do mês (com meta e projeção), rosca de horas por período do dia, calendário de atividade, ganhos ou horas por semana (alternando entre as duas) e horas por dia da semana com linha de movimento;
   - indicadores: sequência de dias, horas extras, maior jornada, dias acima da meta, ritmo para bater a meta, entre outros.
 - **Relatórios**: ganhos mês a mês, comparativo de 6 meses, detalhe dia a dia e **PDF** com o período que você escolher (mês, 30 dias, 3 meses, ano ou datas livres). O PDF é salvo em Downloads.
 - **Importar de Excel/CSV**: em Ajustes > Importar e exportar. Lê `.xlsx` e `.csv`, reconhece colunas como Data, Entrada, Saída (e Entrada 2 / Saída 2 para quem para no almoço), deixa você conferir as colunas e ver uma prévia antes de importar. Registros que já existem são ignorados. Há um botão para baixar um modelo e outro para exportar seus registros.
-- **Painel do dia**: ao tocar numa barra do gráfico, abre o resumo do dia (ganho, comparativo com a média do período, registros, horas, maior registro e composição por registro). Também há os indicadores "Média diária" e "Consistência".
+- **Painel do dia**: ao tocar numa barra do gráfico, o resumo do dia aparece logo abaixo dele (ganho, comparativo com a média do período, registros, horas, maior registro e composição por registro, com horário e horas de cada período). Também há os indicadores "Média diária" e "Consistência".
 - **Extrato diário recente** (Dashboard): últimos dias trabalhados com ganho do dia e variação em relação ao dia anterior; "Ver tudo" abre os Relatórios.
 - **Temas**: claro, escuro ou do sistema, com 5 cores de destaque (dourado, azul, verde, roxo e coral), em Ajustes > Aparência.
 - **Ocultar valores**: o ícone de olho no topo de cada tela esconde todos os valores em R$ (útil em público). A escolha fica salva.

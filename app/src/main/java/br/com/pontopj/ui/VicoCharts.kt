@@ -50,6 +50,7 @@ import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.cartesian.decoration.HorizontalLine
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.core.cartesian.layer.CartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarker
@@ -418,14 +419,18 @@ fun BarChart(
     modifier: Modifier = Modifier,
     highlight: Int = -1,
     chartHeight: Dp = 130.dp,
+    showLine: Boolean = false,
     valueText: (Double) -> String = { "" },
 ) {
     if (values.isEmpty()) return
     val scale = remember(values) { niceScale(values.max(), headroom = 1.22) }
 
     val producer = remember { CartesianChartModelProducer() }
-    LaunchedEffect(values) {
-        producer.runTransaction { columnSeries { series(values) } }
+    LaunchedEffect(values, showLine) {
+        producer.runTransaction {
+            columnSeries { series(values) }
+            if (showLine) lineSeries { series(values) }
+        }
     }
 
     val n = values.size
@@ -439,12 +444,26 @@ fun BarChart(
     val dataFormatter = remember { CartesianValueFormatter { _, value, _ -> valueTextState.value(value) } }
     val dataLabel = rememberTextComponent(color = Palette.Muted, textSize = 10.sp)
 
+    val range = remember(scale) { CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = scale.top) }
     val columnLayer = rememberColumnCartesianLayer(
         columnProvider = columns,
         columnCollectionSpacing = gap,
         dataLabel = dataLabel,
         dataLabelValueFormatter = dataFormatter,
-        rangeProvider = remember(scale) { CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = scale.top) },
+        rangeProvider = range,
+    )
+
+    // Linha que liga o topo das barras: mostra o "movimento" ao longo da semana.
+    val dot = rememberShapeComponent(fill = fill(LineColor), shape = CorneredShape.Pill)
+    val line = LineCartesianLayer.rememberLine(
+        fill = LineCartesianLayer.LineFill.single(fill(LineColor)),
+        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 2.5.dp, cap = StrokeCap.Round),
+        pointConnector = LineCartesianLayer.PointConnector.cubic(),
+        pointProvider = LineCartesianLayer.PointProvider.single(LineCartesianLayer.point(dot, 7.dp)),
+    )
+    val lineLayer = rememberLineCartesianLayer(
+        lineProvider = LineCartesianLayer.LineProvider.series(line),
+        rangeProvider = range,
     )
 
     val labelsState = rememberUpdatedState(labels)
@@ -455,7 +474,7 @@ fun BarChart(
     }
 
     val chart = rememberCartesianChart(
-        columnLayer,
+        *(if (showLine) arrayOf<CartesianLayer<*>>(columnLayer, lineLayer) else arrayOf<CartesianLayer<*>>(columnLayer)),
         bottomAxis = HorizontalAxis.rememberBottom(
             line = axisLine,
             tick = null,

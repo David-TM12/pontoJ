@@ -141,7 +141,7 @@ fun DayPanel(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            "${timeOf(s.startMillis)} → ${s.endMillis?.let { timeOf(it) } ?: "agora"}",
+                            "${timeOf(s.startMillis)} → ${s.endMillis?.let { timeOf(it) } ?: "agora"}  ·  ${formatHm(s.durationMillis(now))}",
                             color = Palette.Text,
                             style = MaterialTheme.typography.bodySmall,
                         )

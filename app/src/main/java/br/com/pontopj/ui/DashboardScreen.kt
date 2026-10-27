@@ -51,6 +51,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @Composable
 fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
@@ -113,6 +114,15 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
             .totalEarnings(now)
         "Semana ${w + 1} (dias $from–$to)" to sum
     }
+    val weekHours = (0 until (month.lengthOfMonth() + 6) / 7).map { w ->
+        val from = w * 7 + 1
+        val to = minOf(from + 6, month.lengthOfMonth())
+        val millis = monthSessions
+            .filter { dateOf(it.startMillis).dayOfMonth in from..to }
+            .totalMillis(now)
+        "Semana ${w + 1} (dias $from–$to)" to millis
+    }
+    var weekMode by rememberSaveable { mutableIntStateOf(0) } // 0 = ganhos, 1 = horas
 
     ScreenColumn {
         ScreenTitle("Dashboard", "Seus números de ${monthName(month)}")
@@ -196,15 +206,6 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
             )
             Spacer(Modifier.height(14.dp))
             val workedValues = dayValues.filter { it > 0.0 }
-            DayPanel(
-                date = days[selectedIndex],
-                earnings = dayValues[selectedIndex],
-                millis = dayMillis[selectedIndex],
-                sessions = vm.sessions.onDate(days[selectedIndex]),
-                average = if (workedValues.isEmpty()) 0.0 else workedValues.average(),
-                now = now,
-            )
-            Spacer(Modifier.height(14.dp))
             EarningsChart(
                 values = dayValues,
                 dates = days,
@@ -216,6 +217,15 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
                 LegendDot(Palette.Gold, "Ganho do dia")
                 LegendDot(Palette.GoldLight, "Média móvel (3 dias)", line = true)
             }
+            Spacer(Modifier.height(14.dp))
+            DayPanel(
+                date = days[selectedIndex],
+                earnings = dayValues[selectedIndex],
+                millis = dayMillis[selectedIndex],
+                sessions = vm.sessions.onDate(days[selectedIndex]),
+                average = if (workedValues.isEmpty()) 0.0 else workedValues.average(),
+                now = now,
+            )
             Spacer(Modifier.height(12.dp))
             Text(
                 "No período: ${brl(dayValues.sum())}  ·  média de ${brl(dayValues.average())}/dia",
@@ -420,23 +430,44 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
             )
         }
 
-        // ---- Ganhos por semana ----
+        // ---- Por semana: ganhos ou horas ----
         AppCard {
-            SectionTitle("Ganhos por semana")
+            SectionTitle(if (weekMode == 0) "Ganhos por semana" else "Horas por semana")
             Text(
                 "Blocos de 7 dias dentro do mês",
                 color = Palette.Muted,
                 style = MaterialTheme.typography.bodySmall,
             )
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RangeChip("Ganhos", selected = weekMode == 0, onClick = { weekMode = 0 })
+                RangeChip("Horas", selected = weekMode == 1, onClick = { weekMode = 1 })
+            }
             Spacer(Modifier.height(14.dp))
-            HorizontalBars(items = weekBuckets, valueText = { brl(it) })
+            if (weekMode == 0) {
+                HorizontalBars(items = weekBuckets, valueText = { brl(it) })
+            } else {
+                HorizontalBars(
+                    items = weekHours.map { it.first to it.second / 3_600_000.0 },
+                    valueText = { formatHm((it * 3_600_000.0).roundToLong()) },
+                )
+                Spacer(Modifier.height(12.dp))
+                val activeWeeks = weekHours.filter { it.second > 0L }
+                if (activeWeeks.isNotEmpty()) {
+                    Text(
+                        "Total: ${formatHm(weekHours.sumOf { it.second })}  ·  média de ${formatHm(activeWeeks.sumOf { it.second } / activeWeeks.size)}/semana",
+                        color = Palette.Text,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
 
         // ---- Horas por dia da semana ----
         AppCard {
             SectionTitle("Horas por dia da semana")
             Text(
-                "Soma de horas em ${monthName(month)}",
+                "Soma das horas de cada dia da semana em ${monthName(month)} (ex.: todas as segundas somadas)",
                 color = Palette.Muted,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -445,6 +476,7 @@ fun DashboardScreen(vm: AppViewModel, onSeeAll: () -> Unit = {}) {
             BarChart(
                 values = hoursByWeekday,
                 labels = weekdays.map { shortWeekday(it) },
+                showLine = true,
                 highlight = if (busiest >= 0 && hoursByWeekday[busiest] > 0) busiest else -1,
                 chartHeight = 110.dp,
                 valueText = { if (it > 0) String.format(Locale.US, "%.0fh", it) else "" },
